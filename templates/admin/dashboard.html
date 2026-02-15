@@ -1,0 +1,326 @@
+<!-- templates/admin/dashboard.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель | Королевские Жалюзи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
+        
+        .royal-font {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .royal-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #E5C687 50%, #C5A059 100%);
+        }
+        
+        .royal-text {
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-card {
+            background: rgba(17, 17, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white">
+    
+    <div class="flex h-screen">
+        <!-- Сайдбар -->
+        <div class="w-64 glass-card h-full fixed left-0 top-0 p-6 overflow-y-auto">
+            <div class="flex items-center space-x-3 mb-8">
+                <i class="fas fa-crown text-3xl royal-text"></i>
+                <span class="text-xl font-bold royal-font">
+                    <span class="royal-text">Королевские</span>
+                </span>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 bg-[#C5A059] bg-opacity-20 border-l-4 border-[#C5A059] rounded-r-lg">
+                    <i class="fas fa-chart-pie text-[#C5A059] w-5"></i>
+                    <span>Дашборд</span>
+                </a>
+                
+                <a href="/templates/admin/products.html" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-window-maximize text-gray-400 w-5"></i>
+                    <span>Товары</span>
+                </a>
+                
+                <a href="/admin/categories" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-tags text-gray-400 w-5"></i>
+                    <span>Категории</span>
+                </a>
+                
+                <a href="/admin/installers" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-tools text-gray-400 w-5"></i>
+                    <span>Установщики</span>
+                </a>
+                
+                <a href="/admin/orders" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-shopping-cart text-gray-400 w-5"></i>
+                    <span>Заказы</span>
+                </a>
+
+                <div class="border-t border-gray-800 my-4"></div>
+                
+                <a href="/" target="_blank" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-globe text-gray-400 w-5"></i>
+                    <span>Перейти на сайт</span>
+                </a>
+                
+                <a href="/admin/logout" class="flex items-center space-x-3 px-4 py-3 hover:bg-red-900 hover:bg-opacity-30 rounded-lg transition text-red-400">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Выйти</span>
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="flex-1 ml-64 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl royal-font font-bold">
+                    <span class="royal-text">Административная</span>
+                    <span class="text-white"> панель</span>
+                </h1>
+                
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-400">
+                        <i class="fas fa-user mr-2"></i>admin
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Статистика -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card rounded-xl p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Всего товаров</p>
+                            <h3 class="text-3xl font-bold text-white">{{ stats.total_products }}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-[#C5A059] bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-box text-2xl text-[#C5A059]"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Категории</p>
+                            <h3 class="text-3xl font-bold text-white">{{ stats.total_categories }}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-[#C5A059] bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-tags text-2xl text-[#C5A059]"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">В наличии</p>
+                            <h3 class="text-3xl font-bold text-white">{{ stats.in_stock }}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-gray-400 text-sm mb-1">Хиты продаж</p>
+                            <h3 class="text-3xl font-bold text-white">{{ stats.popular }}</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-crown text-2xl text-yellow-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Последние товары -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold royal-font">
+                        <span class="royal-text">Последние</span>
+                        <span class="text-white"> добавленные товары</span>
+                    </h2>
+                    <a href="/admin/products" class="text-[#C5A059] hover:text-[#E5C687] transition flex items-center space-x-2">
+                        <span>Все товары</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-left border-b border-gray-800">
+                                <th class="pb-3 text-gray-400 font-medium">Артикул</th>
+                                <th class="pb-3 text-gray-400 font-medium">Название</th>
+                                <th class="pb-3 text-gray-400 font-medium">Категория</th>
+                                <th class="pb-3 text-gray-400 font-medium">Цена</th>
+                                <th class="pb-3 text-gray-400 font-medium">Статус</th>
+                                <th class="pb-3 text-gray-400 font-medium">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products[:5] %}
+                            <tr class="border-b border-gray-800 hover:bg-gray-800 hover:bg-opacity-30 transition">
+                                <td class="py-3">{{ product.product_id }}</td>
+                                <td class="py-3 font-medium">{{ product.name }}</td>
+                                <td class="py-3">
+                                    {% for cat in categories %}
+                                        {% if cat.id == product.category_id %}
+                                            {{ cat.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td class="py-3">{{ product.price|default('По запросу', true) }} ₽</td>
+                                <td class="py-3">
+                                    {% if product.in_stock %}
+                                    <span class="bg-green-500 bg-opacity-20 text-green-500 px-3 py-1 rounded-full text-sm">В наличии</span>
+                                    {% else %}
+                                    <span class="bg-red-500 bg-opacity-20 text-red-500 px-3 py-1 rounded-full text-sm">Под заказ</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <div class="flex space-x-2">
+                                        <a href="/admin/products/edit/{{ product.id }}" 
+                                   class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center text-blue-400 hover:bg-opacity-100 hover:text-white transition edit-btn"
+                                   title="Редактировать товар">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                        <form method="post" action="/admin/products/delete/{{ product.id }}" onsubmit="return confirm('Удалить товар?')">
+                                            <button type="submit" class="text-red-400 hover:text-red-300">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-gray-500">
+                                    <i class="fas fa-box-open text-4xl mb-3"></i>
+                                    <p>Нет добавленных товаров</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Быстрое добавление товара -->
+            <div class="glass-card rounded-xl p-6">
+                <h2 class="text-xl font-bold royal-font mb-6">
+                    <span class="royal-text">Быстрое</span>
+                    <span class="text-white"> добавление товара</span>
+                </h2>
+                
+                <form method="post" action="/admin/products/add" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Артикул (ID ленты)</label>
+                        <input type="text" name="product_id" required 
+                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                               placeholder="Например: PL-001">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Название товара</label>
+                        <input type="text" name="name" required 
+                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                               placeholder="Введите название">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Категория</label>
+                        <select name="category_id" class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]">
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% else %}
+                            <option value="1">Плиссе</option>
+                            <option value="2">День и Ночь</option>
+                            <option value="3">Мини День и Ночь</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Цена (₽)</label>
+                        <input type="number" name="price" step="0.01" 
+                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                               placeholder="Оставьте пустым для 'По запросу'">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-400 mb-2 text-sm">Описание</label>
+                        <textarea name="description" rows="3" required
+                                  class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                                  placeholder="Подробное описание товара"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Материал</label>
+                        <input type="text" name="material" 
+                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                               placeholder="Например: Ткань Blackout">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Размеры</label>
+                        <input type="text" name="sizes" 
+                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                               placeholder="Например: до 200x180 см">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-400 mb-2 text-sm">Изображение</label>
+                        <input type="file" name="image" accept="image/*"
+                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#C5A059] file:text-black file:font-semibold hover:file:bg-[#E5C687]">
+                    </div>
+                    
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="in_stock" checked class="w-4 h-4 accent-[#C5A059]">
+                            <span class="text-gray-300">В наличии</span>
+                        </label>
+                        
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" name="is_popular" class="w-4 h-4 accent-[#C5A059]">
+                            <span class="text-gray-300">Хит продаж</span>
+                        </label>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <button type="submit" 
+                                class="w-full royal-gradient text-black py-3 rounded-lg font-semibold hover:shadow-2xl transform hover:scale-105 transition duration-300">
+                            <i class="fas fa-plus-circle mr-2"></i>
+                            Добавить товар в каталог
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function editProduct(id) {
+            // Функция для редактирования товара
+            alert('Редактирование товара #' + id + ' (будет добавлено в следующем обновлении)');
+        }
+    </script>
+</body>
+</html>

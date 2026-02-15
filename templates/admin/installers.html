@@ -1,0 +1,463 @@
+<!-- templates/admin/installers.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Установщики | Королевские Жалюзи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
+        
+        .royal-font {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .royal-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #E5C687 50%, #C5A059 100%);
+        }
+        
+        .royal-text {
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-card {
+            background: rgba(17, 17, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        
+        .installer-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(197, 160, 89, 0.1);
+        }
+        
+        .installer-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(197, 160, 89, 0.5);
+            box-shadow: 0 20px 30px -10px rgba(197, 160, 89, 0.3);
+        }
+        
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white">
+
+    <div id="notification" class="notification hidden"></div>
+
+    <div class="flex h-screen">
+        <!-- Сайдбар -->
+        <div class="w-64 glass-card h-full fixed left-0 top-0 p-6 overflow-y-auto">
+            <div class="flex items-center space-x-3 mb-8">
+                <i class="fas fa-crown text-3xl royal-text"></i>
+                <span class="text-xl font-bold royal-font">
+                    <span class="royal-text">Королевские</span>
+                </span>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-chart-pie text-gray-400 w-5"></i>
+                    <span>Дашборд</span>
+                </a>
+                
+                <a href="/admin/products" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-window-maximize text-gray-400 w-5"></i>
+                    <span>Товары</span>
+                </a>
+                
+                <a href="/admin/categories" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-tags text-gray-400 w-5"></i>
+                    <span>Категории</span>
+                </a>
+                
+                <a href="/admin/installers" class="flex items-center space-x-3 px-4 py-3 bg-[#C5A059] bg-opacity-20 border-l-4 border-[#C5A059] rounded-r-lg">
+                    <i class="fas fa-tools text-[#C5A059] w-5"></i>
+                    <span>Установщики</span>
+                </a>
+                
+                <a href="/admin/orders" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-shopping-cart text-gray-400 w-5"></i>
+                    <span>Заказы</span>
+                </a>
+                
+                <div class="border-t border-gray-800 my-4"></div>
+                
+                <a href="/" target="_blank" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-globe text-gray-400 w-5"></i>
+                    <span>Перейти на сайт</span>
+                </a>
+                
+                <a href="/admin/logout" class="flex items-center space-x-3 px-4 py-3 hover:bg-red-900 hover:bg-opacity-30 rounded-lg transition text-red-400">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Выйти</span>
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="flex-1 ml-64 p-8 overflow-y-auto">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl royal-font font-bold">
+                        <span class="royal-text">Управление</span>
+                        <span class="text-white"> установщиками</span>
+                    </h1>
+                    <p class="text-gray-400 mt-2">
+                        Всего установщиков: <span id="totalInstallers" class="text-[#C5A059] font-bold">{{ installers|length }}</span>
+                    </p>
+                </div>
+                
+                <button onclick="openAddModal()"
+                        class="royal-gradient text-black px-6 py-3 rounded-lg font-semibold hover:shadow-2xl transform hover:scale-105 transition flex items-center space-x-2">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Добавить установщика</span>
+                </button>
+            </div>
+            
+            <!-- Сетка установщиков -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="installersGrid">
+                {% for installer in installers %}
+                <div class="installer-card glass-card rounded-xl p-6" data-installer-id="{{ installer.id }}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-[#C5A059] bg-opacity-20 flex items-center justify-center">
+                                <i class="fas fa-tools text-2xl text-[#C5A059]"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl royal-font font-bold text-white">{{ installer.name }}</h3>
+                                <p class="text-sm text-[#C5A059]">@{{ installer.username }}</p>
+                            </div>
+                        </div>
+                        
+                        <span class="px-2 py-1 bg-green-500 bg-opacity-20 text-green-500 rounded-full text-xs">
+                            {{ installer.orders|length }} заказов
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-gray-400 text-sm">
+                            <i class="fas fa-phone w-5"></i>
+                            <span>{{ installer.phone }}</span>
+                        </div>
+                        {% if installer.address %}
+                        <div class="flex items-center text-gray-400 text-sm">
+                            <i class="fas fa-map-marker-alt w-5"></i>
+                            <span>{{ installer.address }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center text-gray-400 text-sm">
+                            <i class="fas fa-calendar w-5"></i>
+                            <span>С {{ installer.created_at.strftime('%d.%m.%Y') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-2 pt-4 border-t border-gray-800">
+                        <button onclick="viewInstallerOrders({{ installer.id }}, '{{ installer.name }}')"
+                                class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center text-blue-400 hover:bg-opacity-100 hover:text-white transition action-btn"
+                                title="Показать заказы">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        
+                        <button onclick="editInstaller({{ installer.id }}, '{{ installer.name }}', '{{ installer.username }}', '{{ installer.phone }}', '{{ installer.address|default('', true) }}')"
+                                class="w-8 h-8 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center text-blue-400 hover:bg-opacity-100 hover:text-white transition action-btn"
+                                title="Редактировать">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        
+                        <button onclick="deleteInstaller({{ installer.id }}, '{{ installer.name }}')"
+                                class="w-8 h-8 bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center text-red-400 hover:bg-opacity-100 hover:text-white transition action-btn"
+                                title="Удалить">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-span-3 text-center py-16">
+                    <div class="glass-card rounded-2xl p-12 max-w-lg mx-auto">
+                        <div class="text-7xl mb-4">
+                            <i class="fas fa-tools text-gray-600"></i>
+                        </div>
+                        <h3 class="text-2xl royal-font font-bold text-white mb-3">Нет установщиков</h3>
+                        <p class="text-gray-400 mb-6">
+                            Добавьте первого установщика для работы с заказами
+                        </p>
+                        <button onclick="openAddModal()"
+                                class="royal-gradient text-black px-6 py-3 rounded-lg font-semibold inline-flex items-center space-x-2">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Добавить установщика</span>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления/редактирования установщика -->
+    <div id="installerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div class="glass-card rounded-xl p-8 max-w-md w-full m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modalTitle" class="text-2xl royal-font font-bold">
+                    <span class="royal-text">Добавить</span>
+                    <span class="text-white"> установщика</span>
+                </h2>
+                <button onclick="closeModal()"
+                        class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="installerForm" method="post" class="space-y-4">
+                <input type="hidden" name="installer_id" id="installerId">
+                
+                <div>
+                    <label class="block text-gray-400 mb-1 text-sm">Полное имя *</label>
+                    <input type="text" name="name" id="installerName" required 
+                           class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#C5A059]"
+                           placeholder="Иванов Иван Иванович">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-400 mb-1 text-sm">Никнейм *</label>
+                    <input type="text" name="username" id="installerUsername" required 
+                           class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#C5A059]"
+                           placeholder="@ivanov">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-400 mb-1 text-sm">Телефон *</label>
+                    <input type="text" name="phone" id="installerPhone" required 
+                           class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#C5A059]"
+                           placeholder="+7 (999) 123-45-67">
+                </div>
+                
+                <div>
+                    <label class="block text-gray-400 mb-1 text-sm">Адрес</label>
+                    <textarea name="address" id="installerAddress" rows="2"
+                              class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#C5A059]"
+                              placeholder="Город, улица, дом (необязательно)"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button"
+                            onclick="closeModal()"
+                            class="px-6 py-2 border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition">
+                        Отмена
+                    </button>
+                    <button type="submit" 
+                            class="royal-gradient text-black px-8 py-2 rounded-lg font-semibold hover:shadow-2xl transition">
+                        <i class="fas fa-save mr-2"></i>
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно заказов установщика -->
+    <div id="installerOrdersModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div class="glass-card rounded-xl p-8 max-w-4xl w-full m-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl royal-font font-bold">
+                    <span class="royal-text">Заказы</span>
+                    <span id="installerNameTitle" class="text-white"></span>
+                </h2>
+                <button onclick="closeOrdersModal()"
+                        class="text-gray-400 hover:text-white text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="installerOrdersList" class="space-y-4">
+                <!-- Сюда будут подгружаться заказы -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Уведомления
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.className = `notification ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-6 py-3 rounded-lg shadow-2xl flex items-center space-x-3`;
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} text-xl"></i>
+                <span>${message}</span>
+            `;
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Открыть модальное окно добавления
+        function openAddModal() {
+            document.getElementById('modalTitle').innerHTML = '<span class="royal-text">Добавить</span> <span class="text-white">установщика</span>';
+            document.getElementById('installerForm').action = '/admin/installers/add';
+            document.getElementById('installerId').value = '';
+            document.getElementById('installerName').value = '';
+            document.getElementById('installerUsername').value = '';
+            document.getElementById('installerPhone').value = '';
+            document.getElementById('installerAddress').value = '';
+            document.getElementById('installerModal').classList.remove('hidden');
+        }
+
+        // Редактирование установщика
+        function editInstaller(id, name, username, phone, address) {
+            document.getElementById('modalTitle').innerHTML = '<span class="royal-text">Редактировать</span> <span class="text-white">установщика</span>';
+            document.getElementById('installerForm').action = `/admin/installers/update/${id}`;
+            document.getElementById('installerId').value = id;
+            document.getElementById('installerName').value = name;
+            document.getElementById('installerUsername').value = username;
+            document.getElementById('installerPhone').value = phone;
+            document.getElementById('installerAddress').value = address;
+            document.getElementById('installerModal').classList.remove('hidden');
+        }
+
+        // Удаление установщика
+        function deleteInstaller(id, name) {
+            if (confirm(`Вы уверены, что хотите удалить установщика "${name}"?`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/admin/installers/delete/${id}`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Просмотр заказов установщика
+        function viewInstallerOrders(installerId, installerName) {
+            document.getElementById('installerNameTitle').textContent = installerName;
+            
+            // Загружаем заказы установщика
+            fetch(`/admin/installers/${installerId}/orders`)
+                .then(response => response.json())
+                .then(data => {
+                    const ordersList = document.getElementById('installerOrdersList');
+                    ordersList.innerHTML = '';
+                    
+                    if (data.orders.length === 0) {
+                        ordersList.innerHTML = '<p class="text-gray-400 text-center py-8">У установщика нет заказов</p>';
+                    } else {
+                        data.orders.forEach(order => {
+                            ordersList.innerHTML += `
+                                <div class="border border-gray-800 rounded-lg p-4 hover:border-[#C5A059] transition">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <span class="text-[#C5A059] font-bold">${order.order_id}</span>
+                                            <h4 class="font-semibold text-white mt-1">${order.client_name}</h4>
+                                            <p class="text-sm text-gray-400">${order.client_phone}</p>
+                                        </div>
+                                        <span class="px-3 py-1 ${order.status_class} rounded-full text-xs">${order.status_text}</span>
+                                    </div>
+                                    <div class="mt-3 text-sm text-gray-400">
+                                        <span class="mr-4">Сумма: <span class="text-white">${order.total_sum} ₽</span></span>
+                                        <span>Оплата: <span class="${order.payment_status === 'paid' ? 'text-green-500' : 'text-yellow-500'}">${order.payment_status === 'paid' ? 'Оплачено' : 'Не оплачено'}</span></span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    document.getElementById('installerOrdersModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    showNotification('Ошибка загрузки заказов', 'error');
+                });
+        }
+
+        function closeModal() {
+            document.getElementById('installerModal').classList.add('hidden');
+        }
+
+        function closeOrdersModal() {
+            document.getElementById('installerOrdersModal').classList.add('hidden');
+        }
+
+        // Обработка ответов от сервера
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('added')) {
+                showNotification('Установщик успешно добавлен!', 'success');
+                window.history.replaceState({}, '', '/admin/installers');
+            }
+            
+            if (urlParams.has('updated')) {
+                showNotification('Установщик успешно обновлен!', 'success');
+                window.history.replaceState({}, '', '/admin/installers');
+            }
+            
+            if (urlParams.has('deleted')) {
+                showNotification('Установщик успешно удален!', 'success');
+                window.history.replaceState({}, '', '/admin/installers');
+            }
+            
+            if (urlParams.has('error')) {
+                const error = urlParams.get('error');
+                let message = 'Произошла ошибка';
+                
+                if (error === 'duplicate_username') {
+                    message = 'Установщик с таким никнеймом уже существует';
+                } else if (error === 'has_orders') {
+                    message = 'Нельзя удалить установщика с активными заказами';
+                }
+                
+                showNotification(message, 'error');
+                window.history.replaceState({}, '', '/admin/installers');
+            }
+        };
+
+        // Закрытие по ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeOrdersModal();
+            }
+        });
+
+        // Закрытие по клику вне окна
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('installerModal');
+            const ordersModal = document.getElementById('installerOrdersModal');
+            
+            if (e.target === modal) {
+                closeModal();
+            }
+            if (e.target === ordersModal) {
+                closeOrdersModal();
+            }
+        });
+    </script>
+</body>
+</html>

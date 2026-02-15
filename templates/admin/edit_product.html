@@ -1,0 +1,290 @@
+<!-- templates/admin/edit_product.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование товара | Королевские Жалюзи</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
+        
+        .royal-font {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .royal-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #E5C687 50%, #C5A059 100%);
+        }
+        
+        .royal-text {
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-card {
+            background: rgba(17, 17, 23, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        
+        .preview-image {
+            transition: all 0.3s ease;
+        }
+        
+        .preview-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px -10px rgba(197, 160, 89, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white">
+    <div class="flex h-screen">
+        <!-- Сайдбар -->
+        <div class="w-64 glass-card h-full fixed left-0 top-0 p-6 overflow-y-auto">
+            <div class="flex items-center space-x-3 mb-8">
+                <i class="fas fa-crown text-3xl royal-text"></i>
+                <span class="text-xl font-bold royal-font">
+                    <span class="royal-text">Королевские</span>
+                </span>
+            </div>
+            
+            <nav class="space-y-2">
+                <a href="/admin" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-chart-pie text-gray-400 w-5"></i>
+                    <span>Дашборд</span>
+                </a>
+                
+                <a href="/admin/products" class="flex items-center space-x-3 px-4 py-3 bg-[#C5A059] bg-opacity-20 border-l-4 border-[#C5A059] rounded-r-lg">
+                    <i class="fas fa-window-maximize text-[#C5A059] w-5"></i>
+                    <span>Товары</span>
+                </a>
+                
+                <a href="/admin/categories" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-tags text-gray-400 w-5"></i>
+                    <span>Категории</span>
+                </a>
+                
+                <a href="/admin/installers" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-tools text-gray-400 w-5"></i>
+                    <span>Установщики</span>
+                </a>
+                
+                <a href="/admin/orders" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-shopping-cart text-gray-400 w-5"></i>
+                    <span>Заказы</span>
+                </a>
+
+                <div class="border-t border-gray-800 my-4"></div>
+                <a href="/" target="_blank" class="flex items-center space-x-3 px-4 py-3 hover:bg-gray-800 rounded-lg transition">
+                    <i class="fas fa-globe text-gray-400 w-5"></i>
+                    <span>Перейти на сайт</span>
+                </a>
+                <a href="/admin/logout" class="flex items-center space-x-3 px-4 py-3 hover:bg-red-900 hover:bg-opacity-30 rounded-lg transition text-red-400">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Выйти</span>
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="flex-1 ml-64 p-8 overflow-y-auto">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl royal-font font-bold">
+                        <span class="royal-text">Редактирование</span>
+                        <span class="text-white"> товара</span>
+                    </h1>
+                    <p class="text-gray-400 mt-2">Артикул: <span class="text-[#C5A059]">{{ product.product_id }}</span></p>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <a href="/admin/products" 
+                       class="px-6 py-2 border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition flex items-center space-x-2">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Назад</span>
+                    </a>
+                    
+                    <a href="/product/{{ product.product_id }}" target="_blank"
+                       class="px-6 py-2 bg-blue-500 bg-opacity-20 text-blue-400 border border-blue-500 border-opacity-30 rounded-lg hover:bg-opacity-100 hover:text-white transition flex items-center space-x-2">
+                        <i class="fas fa-eye"></i>
+                        <span>Просмотр на сайте</span>
+                    </a>
+                </div>
+            </div>
+            
+            <form method="post" action="/admin/products/update/{{ product.id }}" enctype="multipart/form-data" class="space-y-6">
+                <div class="glass-card rounded-xl p-6">
+                    <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-[#C5A059] mr-2"></i>
+                        Основная информация
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Артикул (ID ленты) *</label>
+                            <input type="text" name="product_id_code" value="{{ product.product_id }}" required 
+                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Название товара *</label>
+                            <input type="text" name="name" value="{{ product.name }}" required 
+                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Категория *</label>
+                            <select name="category_id" required 
+                                    class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]">
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if category.id == product.category_id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Цена (TJS)</label>
+                            <input type="number" name="price" step="0.01" value="{{ product.price|default('', true) }}" 
+                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                                   placeholder="Оставьте пустым для 'По запросу'">
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-400 mb-2 text-sm">Описание *</label>
+                            <textarea name="description" rows="5" required 
+                                      class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]">{{ product.description }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
+                        <i class="fas fa-gear text-[#C5A059] mr-2"></i>
+                        Характеристики
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Материал</label>
+                            <input type="text" name="material" value="{{ product.material|default('', true) }}" 
+                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                                   placeholder="Например: Ткань Blackout">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Максимальные размеры</label>
+                            <input type="text" name="sizes" value="{{ product.sizes|default('', true) }}" 
+                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C5A059]"
+                                   placeholder="Например: до 200x180 см">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
+                        <i class="fas fa-image text-[#C5A059] mr-2"></i>
+                        Изображение товара
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Текущее изображение</label>
+                            {% if product.image %}
+                            <div class="mb-4">
+                                <img src="{{ product.image }}" alt="{{ product.name }}" class="preview-image w-64 h-64 object-cover rounded-lg border border-[#C5A059] border-opacity-30">
+                                <p class="text-xs text-gray-500 mt-2">Текущее фото товара</p>
+                            </div>
+                            {% else %}
+                            <div class="w-64 h-64 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center mb-4">
+                                <i class="fas fa-blinds text-6xl text-[#C5A059] opacity-40"></i>
+                            </div>
+                            <p class="text-xs text-gray-500">Нет изображения</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-400 mb-2 text-sm">Загрузить новое изображение</label>
+                            <input type="file" name="image" accept="image/*"
+                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#C5A059] file:text-black file:font-semibold hover:file:bg-[#E5C687]">
+                            <p class="text-xs text-gray-500 mt-2">Оставьте пустым, чтобы сохранить текущее изображение</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-card rounded-xl p-6">
+                    <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
+                        <i class="fas fa-tags text-[#C5A059] mr-2"></i>
+                        Статус и настройки
+                    </h2>
+                    
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center space-x-6">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" name="in_stock" value="true" {% if product.in_stock %}checked{% endif %} 
+                                       class="w-5 h-5 rounded border-gray-600 text-[#C5A059] focus:ring-[#C5A059] focus:ring-offset-0 bg-black">
+                                <span class="text-gray-300">Товар в наличии</span>
+                            </label>
+                            
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" name="is_popular" value="true" {% if product.is_popular %}checked{% endif %}
+                                       class="w-5 h-5 rounded border-gray-600 text-[#C5A059] focus:ring-[#C5A059] focus:ring-offset-0 bg-black">
+                                <span class="text-gray-300">Хит продаж (бестселлер)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 mt-2">
+                            <p class="text-sm text-gray-400">
+                                <i class="fas fa-info-circle mr-1 text-[#C5A059]"></i>
+                                <span class="font-semibold text-white">В наличии:</span> Если галочка стоит - товар отображается как "В наличии", если убрать - как "Под заказ"
+                            </p>
+                            <p class="text-sm text-gray-400 mt-2">
+                                <i class="fas fa-info-circle mr-1 text-[#C5A059]"></i>
+                                <span class="font-semibold text-white">Хит продаж:</span> Товар появится на главной странице в блоке "Бестселлеры"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <a href="/admin/products" 
+                       class="px-8 py-3 border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition font-medium">
+                        Отмена
+                    </a>
+                    <button type="submit" 
+                            class="royal-gradient text-black px-8 py-3 rounded-lg font-semibold hover:shadow-2xl transition flex items-center space-x-2">
+                        <i class="fas fa-save"></i>
+                        <span>Сохранить изменения</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Предпросмотр изображения перед загрузкой
+        document.querySelector('input[name="image"]')?.addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Создаем уведомление о выборе файла
+                    alert('Изображение выбрано: ' + this.files[0].name + '\nОно будет загружено при сохранении.');
+                }.bind(this);
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+        
+        // Подтверждение отправки формы
+        document.querySelector('form')?.addEventListener('submit', function(e) {
+            if (!confirm('Сохранить изменения?')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

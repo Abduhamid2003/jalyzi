@@ -1,0 +1,1262 @@
+<!-- templates/products.html - ПОЛНОСТЬЮ АДАПТИРОВАННАЯ МОБИЛЬНАЯ ВЕРСИЯ -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Королевская коллекция жалюзи | Премиум качество</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Swiper для мобильных свайпов -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        h1, h2, h3, h4, .royal-font {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .royal-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #E5C687 50%, #C5A059 100%);
+        }
+        
+        .royal-text {
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .royal-glass {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+        }
+        
+        /* Мобильное меню */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 400px;
+            height: 100vh;
+            background: rgba(5, 5, 8, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 100px 30px 30px;
+            border-left: 2px solid rgba(197, 160, 89, 0.3);
+            overflow-y: auto;
+        }
+        
+        .mobile-menu.active {
+            right: 0;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.5);
+        }
+        
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .hamburger {
+            width: 30px;
+            height: 24px;
+            position: relative;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        .hamburger span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            position: absolute;
+            left: 0;
+            transition: all 0.3s;
+            border-radius: 3px;
+        }
+        
+        .hamburger span:nth-child(1) { top: 0; }
+        .hamburger span:nth-child(2) { top: 10px; width: 70%; }
+        .hamburger span:nth-child(3) { top: 20px; }
+        
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg);
+            top: 10px;
+        }
+        
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            width: 0;
+        }
+        
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg);
+            top: 10px;
+        }
+        
+        /* Анимации */
+        @keyframes crownGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.5)); }
+            50% { filter: drop-shadow(0 0 30px rgba(197, 160, 89, 0.8)); }
+        }
+        
+        .crown-animation {
+            animation: crownGlow 3s ease-in-out infinite;
+        }
+        
+        /* Эффект прикосновения */
+        .tap-effect {
+            transition: transform 0.2s;
+        }
+        
+        .tap-effect:active {
+            transform: scale(0.97);
+        }
+        
+        /* Плавающая WhatsApp кнопка */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 20px rgba(37, 211, 102, 0.4);
+        }
+        
+        @media (min-width: 768px) {
+            .whatsapp-float {
+                width: 64px;
+                height: 64px;
+                bottom: 30px;
+                right: 30px;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Карточка товара */
+        .product-card {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            background: linear-gradient(145deg, #111115, #0a0a0f);
+            border: 1px solid rgba(197, 160, 89, 0.1);
+        }
+        
+        .product-card:active {
+            transform: scale(0.98);
+        }
+        
+        @media (hover: hover) {
+            .product-card:hover {
+                transform: translateY(-15px) rotateX(2deg) rotateY(2deg);
+                border-color: rgba(197, 160, 89, 0.5);
+                box-shadow: 0 30px 50px -20px rgba(197, 160, 89, 0.4);
+            }
+        }
+        
+        .hit-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            color: black;
+            padding: 4px 10px;
+            border-radius: 25px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
+        }
+        
+        @media (min-width: 640px) {
+            .hit-badge {
+                top: 20px;
+                left: 20px;
+                padding: 5px 15px;
+                font-size: 0.875rem;
+            }
+        }
+        
+        /* Фильтры */
+        .filter-btn {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            background: rgba(10, 10, 15, 0.5);
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        
+        @media (min-width: 640px) {
+            .filter-btn {
+                padding: 10px 24px;
+                font-size: 0.95rem;
+            }
+        }
+        
+        .filter-btn:active, .filter-btn.active {
+            background: rgba(197, 160, 89, 0.2);
+            border-color: #C5A059;
+            color: #E5C687;
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
+        }
+        
+        @media (hover: hover) {
+            .filter-btn:hover {
+                background: rgba(197, 160, 89, 0.2);
+                border-color: #C5A059;
+                color: #E5C687;
+            }
+        }
+        
+        .category-chip {
+            padding: 8px 16px;
+            border-radius: 50px;
+            background: rgba(10, 10, 15, 0.6);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            color: #fff;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        
+        @media (min-width: 640px) {
+            .category-chip {
+                padding: 10px 24px;
+                font-size: 1rem;
+            }
+        }
+        
+        .category-chip:active, .category-chip.active {
+            background: rgba(197, 160, 89, 0.2);
+            border-color: #C5A059;
+            color: #E5C687;
+            box-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
+        }
+        
+        /* WhatsApp кнопка на карточке */
+        .whatsapp-card-btn {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            background: rgba(37, 211, 102, 0.1);
+            color: #25D366;
+        }
+        
+        .whatsapp-card-btn:active {
+            background: #25D366;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        /* Цена */
+        .price-tag {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (min-width: 640px) {
+            .price-tag {
+                font-size: 1.875rem;
+            }
+        }
+        
+        /* Сетка товаров */
+        .products-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        @media (min-width: 640px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 30px;
+            }
+        }
+        
+        /* Горизонтальный скролл фильтров */
+        .filters-scroll {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 8px;
+        }
+        
+        .filters-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Кнопки действий */
+        .action-btn {
+            padding: 8px 12px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 0.75rem;
+        }
+        
+        @media (min-width: 640px) {
+            .action-btn {
+                padding: 10px 16px;
+                gap: 6px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .action-btn {
+                padding: 12px 20px;
+                gap: 8px;
+                font-size: 0.95rem;
+            }
+        }
+        
+        .details-btn {
+            background: rgba(197, 160, 89, 0.1);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+            color: #E5C687;
+        }
+        
+        .details-btn:active {
+            background: rgba(197, 160, 89, 0.2);
+        }
+        
+        .whatsapp-btn {
+            background: rgba(37, 211, 102, 0.1);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            color: #25D366;
+        }
+        
+        .whatsapp-btn:active {
+            background: #25D366;
+            color: white;
+        }
+        
+        /* Поиск */
+        .search-input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            border-radius: 50px;
+            padding: 10px 16px 10px 40px;
+            width: 100%;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .search-input:focus {
+            border-color: #C5A059;
+            outline: none;
+        }
+        
+        @media (min-width: 640px) {
+            .search-input {
+                width: 250px;
+                font-size: 1rem;
+            }
+        }
+        
+        /* Адаптивные отступы */
+        @media (max-width: 640px) {
+            section {
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
+            
+            h1 {
+                font-size: 2.5rem !important;
+            }
+            
+            h2 {
+                font-size: 2rem !important;
+            }
+        }
+        
+        /* Свайп-галерея */
+        .swiper-slide {
+            height: auto;
+        }
+        
+        .swiper-pagination-bullet {
+            background: #C5A059;
+        }
+        
+        .swiper-pagination-bullet-active {
+            background: #E5C687;
+        }
+    </style>
+</head>
+<body class="bg-black text-white overflow-x-hidden">
+
+    <!-- Глобальная функция WhatsApp -->
+    <script>
+        function openWhatsApp(sku = '', name = '', price = '', category = '') {
+            const phoneNumber = "992201482424";
+            let message = "";
+            
+            if (sku && name) {
+                message = `Здравствуйте! Меня заинтересовал товар с сайта "Королевские Жалюзи":%0A%0A` +
+                         `🏷 *Артикул:* ${sku}%0A` +
+                         `🪟 *Модель:* ${name}%0A` +
+                         `📁 *Категория:* ${category || 'Жалюзи'}%0A` +
+                         `💰 *Цена:* ${price || 'по запросу'}%0A%0A` +
+                         `Пожалуйста, уточните наличие и условия заказа. Спасибо!`;
+            } else {
+                message = `Здравствуйте! Меня интересуют жалюзи с сайта "Королевские Жалюзи". Помогите с выбором?`;
+            }
+            
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+
+    <!-- Оверлей мобильного меню -->
+    <div class="mobile-menu-overlay" id="menuOverlay"></div>
+
+    <!-- Мобильное меню -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="flex flex-col space-y-8">
+            <div class="flex items-center space-x-3 mb-8 pb-8 border-b border-gray-800">
+                <i class="fas fa-crown text-3xl royal-text crown-animation"></i>
+                <span class="text-2xl font-bold royal-font">
+                    <span class="royal-text">Королевские</span>
+                    <span class="text-white"> Жалюзи</span>
+                </span>
+            </div>
+            
+            <a href="/" class="text-2xl text-white hover:text-[#C5A059] transition flex items-center space-x-3 group">
+                <span class="w-1 h-8 bg-[#C5A059] rounded-full opacity-0 group-hover:opacity-100 transition"></span>
+                <span>Главная</span>
+            </a>
+            
+            <a href="/products" class="text-2xl text-white flex items-center space-x-3 group">
+                <span class="w-1 h-8 bg-[#C5A059] rounded-full opacity-100"></span>
+                <span class="royal-text">Продукты</span>
+            </a>
+            
+            <a href="/about" class="text-2xl text-white hover:text-[#C5A059] transition flex items-center space-x-3 group">
+                <span class="w-1 h-8 bg-[#C5A059] rounded-full opacity-0 group-hover:opacity-100 transition"></span>
+                <span>О нас</span>
+            </a>
+            
+            <div class="pt-8 mt-8 border-t border-gray-800">
+                {% if is_admin %}
+                <a href="/admin" class="bg-[#C5A059] text-black px-6 py-3 rounded-full hover:bg-[#E5C687] transition flex items-center space-x-2 font-semibold w-full justify-center text-lg">
+                    <i class="fas fa-crown"></i>
+                    <span>Админ панель</span>
+                </a>
+                {% else %}
+                <a href="/admin/login" class="border border-[#C5A059] text-[#C5A059] px-6 py-3 rounded-full hover:bg-[#C5A059] hover:text-black transition flex items-center space-x-2 w-full justify-center text-lg">
+                    <i class="fas fa-lock"></i>
+                    <span>Вход</span>
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="flex justify-center space-x-6 pt-8">
+                <button onclick="openWhatsApp()" class="w-12 h-12 border border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition text-xl">
+                    <i class="fab fa-whatsapp"></i>
+                </button>
+                <a href="#" class="w-12 h-12 border border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition text-xl">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <nav class="royal-glass fixed w-full z-50 top-0">
+        <div class="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <i class="fas fa-crown text-xl sm:text-3xl royal-text crown-animation"></i>
+                    <span class="text-lg sm:text-2xl font-bold royal-font whitespace-nowrap">
+                        <span class="royal-text">Королевские Жалюзи</span>
+                        <span class="text-white hidden xs:inline"> Жалюзи</span>
+                    </span>
+                </div>
+                
+                <!-- Десктоп меню -->
+                <div class="hidden md:flex space-x-8 lg:space-x-12">
+                    <a href="/" class="text-white hover:text-[#C5A059] transition-colors font-medium text-base lg:text-lg relative group">
+                        Главная
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A059] transition-all group-hover:w-full"></span>
+                    </a>
+                    <a href="/products" class="text-white hover:text-[#C5A059] transition-colors font-medium text-base lg:text-lg relative group">
+                        <span class="text-[#C5A059]">Продукты</span>
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-[#C5A059]"></span>
+                    </a>
+                    <a href="/about" class="text-white hover:text-[#C5A059] transition-colors font-medium text-base lg:text-lg relative group">
+                        О нас
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A059] transition-all group-hover:w-full"></span>
+                    </a>
+                </div>
+                
+                <!-- Правая часть -->
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    {% if is_admin %}
+                    <a href="/admin" class="hidden sm:flex bg-[#C5A059] text-black px-4 sm:px-6 py-1.5 sm:py-2 rounded-full hover:bg-[#E5C687] transition items-center space-x-2 font-semibold text-sm sm:text-base">
+                        <i class="fas fa-crown"></i>
+                        <span class="hidden sm:inline">Админ</span>
+                    </a>
+                    {% else %}
+                    <a href="/admin/login" class="hidden sm:flex border border-[#C5A059] text-[#C5A059] px-4 sm:px-6 py-1.5 sm:py-2 rounded-full hover:bg-[#C5A059] hover:text-black transition items-center space-x-2 text-sm sm:text-base">
+                        <i class="fas fa-lock"></i>
+                        <span class="hidden sm:inline">Вход</span>
+                    </a>
+                    {% endif %}
+                    
+                    <!-- Гамбургер иконка -->
+                    <div class="hamburger md:hidden" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Герой секция каталога -->
+    <section class="relative pt-20 sm:pt-24 lg:pt-32 pb-12 sm:pb-16 lg:pb-20 overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute inset-0 bg-gradient-to-b from-black via-black to-gray-900 opacity-90"></div>
+            <img src="https://images.unsplash.com/photo-1583847268964-b28dc8aaec9f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+                 alt="Королевский каталог" 
+                 class="w-full h-full object-cover opacity-30">
+        </div>
+        
+        <div class="container mx-auto px-4 sm:px-6 relative z-20">
+            <div class="text-center max-w-4xl mx-auto" data-aos="fade-up" data-aos-duration="1000">
+                <div class="flex justify-center mb-4 sm:mb-6">
+                    <div class="relative">
+                        <i class="fas fa-crown text-4xl sm:text-5xl md:text-6xl royal-text crown-animation"></i>
+                        <div class="absolute -inset-3 bg-[#C5A059] rounded-full blur-2xl opacity-20"></div>
+                    </div>
+                </div>
+                
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl royal-font font-bold mb-3 sm:mb-4 lg:mb-6">
+                    <span class="royal-text">Королевская</span>
+                    <span class="text-white block sm:inline"> коллекция</span>
+                </h1>
+                
+                <p class="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-4 leading-relaxed">
+                    Изысканные жалюзи премиум-класса. Европейское качество, индивидуальный подход, 
+                    <span class="royal-text font-semibold">9 лет совершенства</span>
+                </p>
+                
+                <!-- WhatsApp консультация -->
+                <button onclick="openWhatsApp('', 'Здравствуйте! Меня интересует королевская коллекция жалюзи. Помогите с выбором?')" 
+                        class="bg-[#25D366] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base lg:text-lg font-semibold hover:bg-[#20ba5c] transition inline-flex items-center space-x-2 sm:space-x-3 shadow-2xl transform hover:scale-105 tap-effect">
+                    <i class="fab fa-whatsapp text-lg sm:text-xl lg:text-2xl"></i>
+                    <span>Получить консультацию</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-[#C5A059] to-transparent"></div>
+    </section>
+
+    <!-- Фильтры и категории -->
+    <section class="py-4 sm:py-6 lg:py-8 sticky top-14 sm:top-16 lg:top-20 z-40 royal-glass border-b border-[#C5A059] border-opacity-20">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <!-- Горизонтальный скролл категорий -->
+                <div class="filters-scroll w-full lg:w-auto">
+                    <div class="category-filters flex space-x-2 sm:space-x-3 pb-1">
+                        <button class="category-chip active" data-category="all">
+                            <i class="fas fa-crown mr-1 sm:mr-2"></i>
+                            Все
+                        </button>
+                        
+                        {% for category in categories %}
+                        <button class="category-chip" data-category="{{ category.id }}">
+                            {% if category.name == 'Плиссе' %}
+                                <i class="fas fa-ribbon mr-1 sm:mr-2"></i>
+                            {% elif category.name == 'День и Ночь' %}
+                                <i class="fas fa-sun mr-1 sm:mr-2"></i>
+                            {% elif category.name == 'Мини День и Ночь' %}
+                                <i class="fas fa-compress-alt mr-1 sm:mr-2"></i>
+                            {% else %}
+                                <i class="fas fa-blinds mr-1 sm:mr-2"></i>
+                            {% endif %}
+                            {{ category.name }}
+                        </button>
+                        {% else %}
+                        <button class="category-chip" data-category="1">
+                            <i class="fas fa-ribbon mr-1 sm:mr-2"></i>
+                            Плиссе
+                        </button>
+                        <button class="category-chip" data-category="2">
+                            <i class="fas fa-sun mr-1 sm:mr-2"></i>
+                            День и Ночь
+                        </button>
+                        <button class="category-chip" data-category="3">
+                            <i class="fas fa-compress-alt mr-1 sm:mr-2"></i>
+                            Мини
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Поиск -->
+                <div class="w-full lg:w-auto">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm sm:text-base"></i>
+                        <input type="text" 
+                               id="searchInput"
+                               placeholder="Поиск по артикулу..."
+                               class="search-input">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Товары -->
+    <section class="py-8 sm:py-12 lg:py-16 min-h-screen">
+        <div class="container mx-auto px-4 sm:px-6">
+            <!-- Сетка товаров -->
+            <div id="productsGrid" class="products-grid">
+                {% for product in products %}
+                <div class="product-card rounded-xl sm:rounded-2xl overflow-hidden group"
+                     data-id="{{ product.id }}"
+                     data-name="{{ product.name }}"
+                     data-sku="{{ product.product_id }}"
+                     data-category="{{ product.category_id }}"
+                     data-price="{{ product.price|default(0, true) }}"
+                     data-aos="fade-up"
+                     data-aos-duration="600"
+                     data-aos-delay="{{ loop.index * 50 }}">
+                    
+                    {% if product.is_popular %}
+                    <div class="hit-badge">
+                        <i class="fas fa-crown mr-1"></i>
+                        ХИТ
+                    </div>
+                    {% endif %}
+                    
+                    <div class="relative h-48 sm:h-56 md:h-64 lg:h-72 image-zoom">
+                        {% if product.image %}
+                        <img src="{{ product.image }}" 
+                             alt="{{ product.name }}" 
+                             class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                            <i class="fas fa-blinds text-5xl sm:text-6xl lg:text-7xl text-[#C5A059] opacity-40"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="absolute bottom-2 sm:bottom-3 lg:bottom-4 left-2 sm:left-3 lg:left-4 z-20">
+                            {% if product.in_stock %}
+                            <span class="bg-green-500 bg-opacity-90 backdrop-blur-sm text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[0.6rem] sm:text-xs lg:text-sm font-medium">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                В наличии
+                            </span>
+                            {% else %}
+                            <span class="bg-yellow-500 bg-opacity-90 backdrop-blur-sm text-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[0.6rem] sm:text-xs lg:text-sm font-medium">
+                                <i class="fas fa-clock mr-1"></i>
+                                Под заказ
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="absolute top-2 sm:top-3 lg:top-4 right-2 sm:right-3 lg:right-4 z-20">
+                            <span class="bg-black bg-opacity-70 backdrop-blur-sm text-[#C5A059] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[0.6rem] sm:text-xs lg:text-sm border border-[#C5A059] border-opacity-30">
+                                <i class="fas fa-hashtag mr-1"></i>
+                                {{ product.product_id }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-3 sm:p-4 lg:p-5 xl:p-6">
+                        <div class="flex justify-between items-start mb-1 sm:mb-2">
+                            <div>
+                                <h3 class="text-sm sm:text-base lg:text-lg xl:text-xl royal-font font-bold text-white mb-1 group-hover:royal-text transition">
+                                    {{ product.name }}
+                                </h3>
+                                
+                                <div class="flex items-center space-x-1 sm:space-x-2">
+                                    {% for category in categories %}
+                                        {% if category.id == product.category_id %}
+                                        <span class="text-[0.6rem] sm:text-xs text-gray-400">
+                                            <i class="fas fa-tag mr-1 text-[#C5A059]"></i>
+                                            {{ category.name }}
+                                        </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-[0.65rem] sm:text-xs lg:text-sm text-gray-400 mb-2 sm:mb-3 line-clamp-2">
+                            {{ product.description[:80] }}...
+                        </p>
+                        
+                        {% if product.material or product.sizes %}
+                        <div class="flex flex-wrap gap-1 sm:gap-2 mb-2 sm:mb-3">
+                            {% if product.material %}
+                            <span class="text-[0.55rem] sm:text-xs bg-gray-800 bg-opacity-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-gray-300 border border-gray-700">
+                                <i class="fas fa-layer-group mr-1 text-[#C5A059]"></i>
+                                {{ product.material }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if product.sizes %}
+                            <span class="text-[0.55rem] sm:text-xs bg-gray-800 bg-opacity-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-gray-300 border border-gray-700">
+                                <i class="fas fa-ruler mr-1 text-[#C5A059]"></i>
+                                {{ product.sizes }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex items-center justify-between mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-800">
+                            <div>
+                                {% if product.price %}
+                                <span class="price-tag text-sm sm:text-base lg:text-lg xl:text-xl">{{ "{:,.0f}".format(product.price) }} TJS</span>
+                                {% else %}
+                                <span class="text-xs sm:text-sm text-gray-400">По запросу</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Кнопки действий -->
+                        <div class="flex space-x-1 sm:space-x-2 mt-2 sm:mt-3">
+                            <a href="/product/{{ product.product_id }}" 
+                               class="action-btn details-btn flex-1">
+                                <i class="fas fa-info-circle"> Детали</i>
+                                <span class="hidden xs:inline">Детали</span>
+                            </a>
+                            
+                            <button onclick="openWhatsApp(
+                                '{{ product.product_id }}',
+                                '{{ product.name }}',
+                                '{{ product.price|default("Цена по запросу", true) }}',
+                                '{{ product.category.name|default("") }}'
+                            )" 
+                                    class="action-btn whatsapp-btn flex-1">
+                                <i class="fab fa-whatsapp"> Заказать</i>
+                                <span class="hidden xs:inline">Купить</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Демо-товары -->
+                <div class="product-card rounded-xl sm:rounded-2xl overflow-hidden group"
+                     data-category="2"
+                     data-sku="DN-101"
+                     data-name="День и Ночь Премиум"
+                     data-aos="fade-up">
+                    <div class="hit-badge">
+                        <i class="fas fa-crown mr-1"></i>
+                        ХИТ
+                    </div>
+                    <div class="relative h-48 sm:h-56 md:h-64 lg:h-72">
+                        <img src="https://images.unsplash.com/photo-1523750505257-5fedd6f3aa31?ixlib=rb-4.0.3&auto=format&fit=crop&w=1169&q=80" 
+                             alt="День и Ночь Премиум" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute bottom-2 left-2">
+                            <span class="bg-green-500 bg-opacity-90 text-white px-2 py-0.5 rounded-full text-xs">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                В наличии
+                            </span>
+                        </div>
+                        <div class="absolute top-2 right-2">
+                            <span class="bg-black bg-opacity-70 text-[#C5A059] px-2 py-0.5 rounded-full text-xs">
+                                <i class="fas fa-hashtag mr-1"></i>
+                                DN-101
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-base sm:text-lg royal-font font-bold text-white mb-2">День и Ночь Премиум</h3>
+                        <p class="text-xs text-gray-400 mb-3 line-clamp-2">
+                            Двухслойная ткань, регулировка освещения, 5 премиальных расцветок
+                        </p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+                            <span class="price-tag text-sm">от 3 900 ₽</span>
+                        </div>
+                        <div class="flex space-x-2 mt-3">
+                            <a href="#" class="action-btn details-btn flex-1 text-xs">
+                                <i class="fas fa-info-circle"></i>
+                                Детали
+                            </a>
+                            <button onclick="openWhatsApp('DN-101', 'День и Ночь Премиум', 'от 3 900 ₽', 'День и Ночь')" 
+                                    class="action-btn whatsapp-btn flex-1 text-xs">
+                                <i class="fab fa-whatsapp"></i>
+                                Купить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card rounded-xl sm:rounded-2xl overflow-hidden group"
+                     data-category="1"
+                     data-sku="PL-202"
+                     data-name="Плиссе Элеганс"
+                     data-aos="fade-up"
+                     data-aos-delay="100">
+                    <div class="relative h-48 sm:h-56 md:h-64 lg:h-72">
+                        <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1169&q=80" 
+                             alt="Плиссе Элеганс" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute bottom-2 left-2">
+                            <span class="bg-green-500 bg-opacity-90 text-white px-2 py-0.5 rounded-full text-xs">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                В наличии
+                            </span>
+                        </div>
+                        <div class="absolute top-2 right-2">
+                            <span class="bg-black bg-opacity-70 text-[#C5A059] px-2 py-0.5 rounded-full text-xs">
+                                <i class="fas fa-hashtag mr-1"></i>
+                                PL-202
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-base sm:text-lg royal-font font-bold text-white mb-2">Плиссе Элеганс</h3>
+                        <p class="text-xs text-gray-400 mb-3 line-clamp-2">
+                            Идеально для мансардных окон, 8 цветов, система Day&Night
+                        </p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+                            <span class="price-tag text-sm">от 5 200 ₽</span>
+                        </div>
+                        <div class="flex space-x-2 mt-3">
+                            <a href="#" class="action-btn details-btn flex-1 text-xs">
+                                <i class="fas fa-info-circle"></i>
+                                Детали
+                            </a>
+                            <button onclick="openWhatsApp('PL-202', 'Плиссе Элеганс', 'от 5 200 ₽', 'Плиссе')" 
+                                    class="action-btn whatsapp-btn flex-1 text-xs">
+                                <i class="fab fa-whatsapp"></i>
+                                Купить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-card rounded-xl sm:rounded-2xl overflow-hidden group"
+                     data-category="3"
+                     data-sku="MD-303"
+                     data-name="Мини День и Ночь"
+                     data-aos="fade-up"
+                     data-aos-delay="200">
+                    <div class="relative h-48 sm:h-56 md:h-64 lg:h-72">
+                        <img src="https://images.unsplash.com/photo-1621600411688-4be93cd68504?ixlib=rb-4.0.3&auto=format&fit=crop&w=764&q=80" 
+                             alt="Мини День и Ночь" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute bottom-2 left-2">
+                            <span class="bg-yellow-500 bg-opacity-90 text-black px-2 py-0.5 rounded-full text-xs">
+                                <i class="fas fa-clock mr-1"></i>
+                                Под заказ
+                            </span>
+                        </div>
+                        <div class="absolute top-2 right-2">
+                            <span class="bg-black bg-opacity-70 text-[#C5A059] px-2 py-0.5 rounded-full text-xs">
+                                <i class="fas fa-hashtag mr-1"></i>
+                                MD-303
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-base sm:text-lg royal-font font-bold text-white mb-2">Мини День и Ночь</h3>
+                        <p class="text-xs text-gray-400 mb-3 line-clamp-2">
+                            Компактная система для небольших окон, легкая установка
+                        </p>
+                        <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+                            <span class="price-tag text-sm">от 2 800 ₽</span>
+                        </div>
+                        <div class="flex space-x-2 mt-3">
+                            <a href="#" class="action-btn details-btn flex-1 text-xs">
+                                <i class="fas fa-info-circle"></i>
+                                Детали
+                            </a>
+                            <button onclick="openWhatsApp('MD-303', 'Мини День и Ночь', 'от 2 800 ₽', 'Мини День и Ночь')" 
+                                    class="action-btn whatsapp-btn flex-1 text-xs">
+                                <i class="fab fa-whatsapp"></i>
+                                Купить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Пустое состояние -->
+            <div id="emptyState" class="hidden text-center py-12 sm:py-16 lg:py-20">
+                <div class="royal-glass rounded-xl sm:rounded-2xl p-6 sm:p-8 lg:p-12 max-w-lg mx-auto">
+                    <div class="text-5xl sm:text-6xl lg:text-7xl mb-4 sm:mb-6">
+                        <i class="fas fa-crown royal-text opacity-50"></i>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl lg:text-3xl royal-font font-bold mb-2 sm:mb-3">Товары не найдены</h3>
+                    <p class="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6">Попробуйте изменить параметры поиска</p>
+                    <button onclick="resetFilters()" 
+                            class="royal-gradient text-black px-6 sm:px-8 py-2 sm:py-3 rounded-full text-sm sm:text-base font-semibold hover:shadow-2xl transition tap-effect">
+                        <i class="fas fa-redo-alt mr-2"></i>
+                        Сбросить фильтры
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Преимущества -->
+    <section class="py-10 sm:py-16 lg:py-20 bg-gradient-to-b from-black to-gray-900">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-8">
+                <div class="text-center group" data-aos="fade-up" data-aos-duration="600">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 lg:mb-4 rounded-full bg-[#C5A059] bg-opacity-20 flex items-center justify-center group-hover:scale-110 transition">
+                        <i class="fas fa-crown text-lg sm:text-xl lg:text-2xl text-[#C5A059]"></i>
+                    </div>
+                    <h3 class="text-xs sm:text-sm lg:text-base font-bold mb-1 royal-text">Премиум качество</h3>
+                    <p class="text-[0.6rem] sm:text-xs text-gray-400">Турецкие материалы</p>
+                </div>
+                
+                <div class="text-center group" data-aos="fade-up" data-aos-duration="600" data-aos-delay="100">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 lg:mb-4 rounded-full bg-[#C5A059] bg-opacity-20 flex items-center justify-center group-hover:scale-110 transition">
+                        <i class="fas fa-truck-fast text-lg sm:text-xl lg:text-2xl text-[#C5A059]"></i>
+                    </div>
+                    <h3 class="text-xs sm:text-sm lg:text-base font-bold mb-1 royal-text">Доставка от 3 дней</h3>
+                    <p class="text-[0.6rem] sm:text-xs text-gray-400">По всему Худжанду</p>
+                </div>
+                
+                <div class="text-center group" data-aos="fade-up" data-aos-duration="600" data-aos-delay="200">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 lg:mb-4 rounded-full bg-[#C5A059] bg-opacity-20 flex items-center justify-center group-hover:scale-110 transition">
+                        <i class="fas fa-shield-alt text-lg sm:text-xl lg:text-2xl text-[#C5A059]"></i>
+                    </div>
+                    <h3 class="text-xs sm:text-sm lg:text-base font-bold mb-1 royal-text">Гарантия 5 лет</h3>
+                    <p class="text-[0.6rem] sm:text-xs text-gray-400">На все изделия</p>
+                </div>
+                
+                <div class="text-center group" data-aos="fade-up" data-aos-duration="600" data-aos-delay="300">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 mx-auto mb-2 sm:mb-3 lg:mb-4 rounded-full bg-[#C5A059] bg-opacity-20 flex items-center justify-center group-hover:scale-110 transition">
+                        <i class="fab fa-whatsapp text-lg sm:text-xl lg:text-2xl text-[#C5A059]"></i>
+                    </div>
+                    <h3 class="text-xs sm:text-sm lg:text-base font-bold mb-1 royal-text">Мгновенные ответы</h3>
+                    <p class="text-[0.6rem] sm:text-xs text-gray-400">В WhatsApp за 5 минут</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer class="bg-black border-t border-gray-800 py-6 sm:py-8 lg:py-12">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 sm:space-x-3 mb-3 md:mb-0">
+                    <i class="fas fa-crown text-xl sm:text-2xl lg:text-3xl royal-text crown-animation"></i>
+                    <span class="text-base sm:text-lg lg:text-xl font-bold royal-font">
+                        <span class="royal-text">Королевские Жалюзи</span>
+                        <span class="text-white hidden xs:inline"> Жалюзи</span>
+                    </span>
+                </div>
+                
+                <div class="text-gray-400 text-center md:text-left text-xs sm:text-sm">
+                    <p>© 2015-2024 Королевские Жалюзи. 9 лет качества.</p>
+                </div>
+                
+                <div class="flex space-x-2 sm:space-x-3 lg:space-x-4 mt-3 md:mt-0">
+                    <button onclick="openWhatsApp('', 'Здравствуйте! У меня вопрос по жалюзи')" 
+                            class="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 border border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition text-xs sm:text-sm tap-effect">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <a href="#" class="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 border border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition text-xs sm:text-sm tap-effect">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Плавающая WhatsApp кнопка -->
+    <button onclick="openWhatsApp('', 'Здравствуйте! Меня интересуют королевские жалюзи. Помогите с выбором?')" 
+            class="whatsapp-float tap-effect">
+        <i class="fab fa-whatsapp text-xl sm:text-2xl lg:text-3xl"></i>
+    </button>
+
+    <!-- Скрипты -->
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    // Инициализация AOS
+    AOS.init({
+        duration: 600,
+        once: false,
+        mirror: true,
+        disable: function() {
+            return window.innerWidth < 768;
+        }
+    });
+    
+    // Мобильное меню
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    
+    if (hamburger) {
+        hamburger.addEventListener('click', function() {
+            this.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+        });
+    }
+    
+    if (menuOverlay) {
+        menuOverlay.addEventListener('click', function() {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    const menuLinks = mobileMenu?.querySelectorAll('a');
+    menuLinks?.forEach(link => {
+        link.addEventListener('click', function() {
+            hamburger.classList.remove('active');
+            mobileMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    });
+    
+    // Фильтрация товаров
+    const filterButtons = document.querySelectorAll('.category-chip');
+    const products = document.querySelectorAll('.product-card');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    
+    let activeCategory = 'all';
+    let searchQuery = '';
+    
+    // Функция для транслитерации русского текста в английский
+    function transliterate(text) {
+        const rus = ['а','б','в','г','д','е','ё','ж','з','и','й','к','л','м','н','о','п','р','с','т','у','ф','х','ц','ч','ш','щ','ъ','ы','ь','э','ю','я'];
+        const eng = ['a','b','v','g','d','e','yo','zh','z','i','y','k','l','m','n','o','p','r','s','t','u','f','kh','ts','ch','sh','shch','','y','','e','yu','ya'];
+        
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i].toLowerCase();
+            const index = rus.indexOf(char);
+            if (index !== -1) {
+                result += eng[index];
+            } else {
+                result += char;
+            }
+        }
+        return result;
+    }
+    
+    // Функция для нормализации текста (удаление лишних символов, приведение к нижнему регистру)
+    function normalizeText(text) {
+        return text.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+    
+    // Функция для проверки соответствия с учетом транслитерации
+    function matchesSearch(text, query) {
+        if (!text || !query) return false;
+        
+        const normalizedText = normalizeText(text);
+        const normalizedQuery = normalizeText(query);
+        
+        // Прямое совпадение
+        if (normalizedText.includes(normalizedQuery)) return true;
+        
+        // Совпадение через транслитерацию (русский -> английский)
+        const transliteratedText = normalizeText(transliterate(text));
+        if (transliteratedText.includes(normalizedQuery)) return true;
+        
+        // Совпадение через транслитерацию запроса (если запрос на русском, а текст на английском)
+        const transliteratedQuery = normalizeText(transliterate(query));
+        if (normalizedText.includes(transliteratedQuery)) return true;
+        
+        return false;
+    }
+    
+    function filterProducts() {
+        let visibleCount = 0;
+        
+        products.forEach(product => {
+            let show = true;
+            
+            // Фильтр по категории
+            if (activeCategory !== 'all') {
+                const productCategory = product.dataset.category;
+                if (productCategory !== activeCategory) {
+                    show = false;
+                }
+            }
+            
+            // Поиск по названию и артикулу (с поддержкой русского/английского)
+            if (show && searchQuery && searchQuery.trim() !== '') {
+                const name = product.dataset.name || '';
+                const sku = product.dataset.sku || '';
+                
+                // Проверяем совпадение в названии или артикуле
+                const nameMatch = matchesSearch(name, searchQuery);
+                const skuMatch = matchesSearch(sku, searchQuery);
+                
+                if (!nameMatch && !skuMatch) {
+                    show = false;
+                }
+            }
+            
+            product.style.display = show ? 'block' : 'none';
+            if (show) visibleCount++;
+        });
+        
+        if (emptyState) {
+            emptyState.style.display = visibleCount === 0 ? 'flex' : 'none';
+        }
+    }
+    
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            activeCategory = this.dataset.category;
+            filterProducts();
+            
+            // Плавный скролл к товарам на мобильных
+            if (window.innerWidth < 768) {
+                document.getElementById('productsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            searchQuery = e.target.value;
+            filterProducts();
+        });
+    }
+    
+    function resetFilters() {
+        activeCategory = 'all';
+        searchQuery = '';
+        
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('[data-category="all"]')?.classList.add('active');
+        
+        if (searchInput) searchInput.value = '';
+        
+        filterProducts();
+    }
+    
+    // Инициализация фильтров из URL
+    function initFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryParam = urlParams.get('category');
+        
+        if (categoryParam) {
+            const categoryBtn = document.querySelector(`[data-category="${categoryParam}"]`);
+            if (categoryBtn) {
+                categoryBtn.click();
+            }
+        }
+    }
+    
+    initFromUrl();
+    
+    // Touch эффекты
+    document.querySelectorAll('.tap-effect').forEach(el => {
+        el.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.97)';
+        });
+        el.addEventListener('touchend', function() {
+            this.style.transform = 'scale(1)';
+        });
+        el.addEventListener('touchcancel', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+    
+    // Обработка resize
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            if (window.innerWidth >= 1024) {
+                hamburger?.classList.remove('active');
+                mobileMenu?.classList.remove('active');
+                menuOverlay?.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }, 250);
+    });
+</script>
+</body>
+</html>

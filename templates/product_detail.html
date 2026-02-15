@@ -1,0 +1,878 @@
+<!-- templates/product_detail.html - ПОЛНОСТЬЮ АДАПТИРОВАННАЯ МОБИЛЬНАЯ ВЕРСИЯ -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>{{ product.name }} | Королевские Жалюзи</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Swiper для мобильных свайпов -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        h1, h2, h3, .royal-font {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        
+        .royal-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #E5C687 50%, #C5A059 100%);
+        }
+        
+        .royal-text {
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .royal-glass {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(197, 160, 89, 0.3);
+        }
+        
+        /* Мобильное меню */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 400px;
+            height: 100vh;
+            background: rgba(5, 5, 8, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 100px 30px 30px;
+            border-left: 2px solid rgba(197, 160, 89, 0.3);
+            overflow-y: auto;
+        }
+        
+        .mobile-menu.active {
+            right: 0;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.5);
+        }
+        
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .hamburger {
+            width: 30px;
+            height: 24px;
+            position: relative;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        .hamburger span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(135deg, #C5A059, #E5C687);
+            position: absolute;
+            left: 0;
+            transition: all 0.3s;
+            border-radius: 3px;
+        }
+        
+        .hamburger span:nth-child(1) { top: 0; }
+        .hamburger span:nth-child(2) { top: 10px; width: 70%; }
+        .hamburger span:nth-child(3) { top: 20px; }
+        
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg);
+            top: 10px;
+        }
+        
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            width: 0;
+        }
+        
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg);
+            top: 10px;
+        }
+        
+        /* Анимации */
+        @keyframes crownGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.5)); }
+            50% { filter: drop-shadow(0 0 30px rgba(197, 160, 89, 0.8)); }
+        }
+        
+        .crown-animation {
+            animation: crownGlow 3s ease-in-out infinite;
+        }
+        
+        /* Эффект прикосновения */
+        .tap-effect {
+            transition: transform 0.2s;
+        }
+        
+        .tap-effect:active {
+            transform: scale(0.97);
+        }
+        
+        /* Плавающая WhatsApp кнопка */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+            cursor: pointer;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 20px rgba(37, 211, 102, 0.4);
+        }
+        
+        @media (min-width: 768px) {
+            .whatsapp-float {
+                width: 64px;
+                height: 64px;
+                bottom: 30px;
+                right: 30px;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Изображение товара */
+        .product-image {
+            transition: transform 0.7s ease;
+        }
+        
+        .product-image:active {
+            transform: scale(1.02);
+        }
+        
+        @media (hover: hover) {
+            .product-image:hover {
+                transform: scale(1.05);
+            }
+        }
+        
+        /* Характеристики */
+        .characteristic-item {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(197, 160, 89, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .characteristic-item:active {
+            background: rgba(197, 160, 89, 0.1);
+            border-color: rgba(197, 160, 89, 0.3);
+        }
+        
+        @media (hover: hover) {
+            .characteristic-item:hover {
+                background: rgba(197, 160, 89, 0.1);
+                border-color: rgba(197, 160, 89, 0.3);
+            }
+        }
+        
+        .action-btn {
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        
+        @media (min-width: 640px) {
+            .action-btn {
+                padding: 14px 24px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .action-btn {
+                padding: 14px 28px;
+                font-size: 1rem;
+            }
+        }
+        
+        .whatsapp-btn {
+            background: rgba(37, 211, 102, 0.1);
+            border: 1px solid rgba(37, 211, 102, 0.3);
+            color: #25D366;
+        }
+        
+        .whatsapp-btn:active {
+            background: #25D366;
+            color: white;
+        }
+        
+        .product-card {
+            transition: all 0.5s ease;
+            background: linear-gradient(145deg, #111115, #0a0a0f);
+            border: 1px solid rgba(197, 160, 89, 0.1);
+        }
+        
+        .product-card:active {
+            transform: scale(0.98);
+        }
+        
+        @media (hover: hover) {
+            .product-card:hover {
+                transform: translateY(-10px);
+                border-color: rgba(197, 160, 89, 0.5);
+                box-shadow: 0 30px 50px -20px rgba(197, 160, 89, 0.4);
+            }
+        }
+        
+        /* Свайп-галерея */
+        .swiper-slide {
+            height: auto;
+        }
+        
+        .swiper-pagination-bullet {
+            background: #C5A059;
+        }
+        
+        .swiper-pagination-bullet-active {
+            background: #E5C687;
+        }
+        
+        /* Адаптивные отступы */
+        @media (max-width: 640px) {
+            section {
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
+            
+            h1 {
+                font-size: 2rem !important;
+            }
+            
+            h2 {
+                font-size: 1.75rem !important;
+            }
+            
+            .breadcrumbs {
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Хлебные крошки */
+        .breadcrumbs {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .breadcrumbs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Цена */
+        .price-large {
+            font-size: 2.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .price-large {
+                font-size: 3rem;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .price-large {
+                font-size: 3.5rem;
+            }
+        }
+        
+        /* Hover эффекты для тач-устройств */
+        @media (hover: none) {
+            .characteristic-item:active {
+                background: rgba(197, 160, 89, 0.1);
+            }
+            
+            .product-card:active {
+                transform: scale(0.98);
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-white overflow-x-hidden">
+
+    <!-- Глобальная функция WhatsApp -->
+    <script>
+        function openWhatsApp(sku = '', name = '', price = '', category = '') {
+            const phoneNumber = "992201482424";
+            let message = "";
+            
+            if (sku && name) {
+                message = `Здравствуйте! Меня заинтересовал товар с сайта "Королевские Жалюзи":%0A%0A` +
+                         `🏷 *Артикул:* ${sku}%0A` +
+                         `🪟 *Модель:* ${name}%0A` +
+                         `📁 *Категория:* ${category || 'Жалюзи'}%0A` +
+                         `💰 *Цена:* ${price || 'по запросу'}%0A%0A` +
+                         `Пожалуйста, уточните наличие и условия заказа. Спасибо!`;
+            } else {
+                message = `Здравствуйте! Меня интересуют жалюзи с сайта "Королевские Жалюзи". Хочу узнать подробнее о товаре.`;
+            }
+            
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+
+    <!-- Оверлей мобильного меню -->
+    <div class="mobile-menu-overlay" id="menuOverlay"></div>
+
+    <!-- Мобильное меню -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="flex flex-col space-y-8">
+            <div class="flex items-center space-x-3 mb-8 pb-8 border-b border-gray-800">
+                <i class="fas fa-crown text-3xl royal-text crown-animation"></i>
+                <span class="text-2xl font-bold royal-font">
+                    <span class="royal-text">Королевские</span>
+                    <span class="text-white"> Жалюзи</span>
+                </span>
+            </div>
+            
+            <a href="/" class="text-2xl text-white hover:text-[#C5A059] transition flex items-center space-x-3 group">
+                <span class="w-1 h-8 bg-[#C5A059] rounded-full opacity-0 group-hover:opacity-100 transition"></span>
+                <span>Главная</span>
+            </a>
+            
+            <a href="/products" class="text-2xl text-white hover:text-[#C5A059] transition flex items-center space-x-3 group">
+                <span class="w-1 h-8 bg-[#C5A059] rounded-full opacity-0 group-hover:opacity-100 transition"></span>
+                <span>Продукты</span>
+            </a>
+            
+            <a href="/about" class="text-2xl text-white hover:text-[#C5A059] transition flex items-center space-x-3 group">
+                <span class="w-1 h-8 bg-[#C5A059] rounded-full opacity-0 group-hover:opacity-100 transition"></span>
+                <span>О нас</span>
+            </a>
+            
+            <div class="pt-8 mt-8 border-t border-gray-800">
+                {% if is_admin %}
+                <a href="/admin" class="bg-[#C5A059] text-black px-6 py-3 rounded-full hover:bg-[#E5C687] transition flex items-center space-x-2 font-semibold w-full justify-center text-lg">
+                    <i class="fas fa-crown"></i>
+                    <span>Админ панель</span>
+                </a>
+                {% else %}
+                <a href="/admin/login" class="border border-[#C5A059] text-[#C5A059] px-6 py-3 rounded-full hover:bg-[#C5A059] hover:text-black transition flex items-center space-x-2 w-full justify-center text-lg">
+                    <i class="fas fa-lock"></i>
+                    <span>Вход</span>
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="flex justify-center space-x-6 pt-8">
+                <button onclick="openWhatsApp()" class="w-12 h-12 border border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition text-xl">
+                    <i class="fab fa-whatsapp"></i>
+                </button>
+                <a href="#" class="w-12 h-12 border border-[#C5A059] rounded-full flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-black transition text-xl">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <nav class="royal-glass fixed w-full z-50 top-0">
+        <div class="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <i class="fas fa-crown text-xl sm:text-3xl royal-text crown-animation"></i>
+                    <span class="text-lg sm:text-2xl font-bold royal-font whitespace-nowrap">
+                        <span class="royal-text">Королевские Жалюзи</span>
+                        <span class="text-white hidden xs:inline"> Жалюзи</span>
+                    </span>
+                </div>
+                
+                <!-- Десктоп меню -->
+                <div class="hidden md:flex space-x-8 lg:space-x-12">
+                    <a href="/" class="text-white hover:text-[#C5A059] transition-colors font-medium text-base lg:text-lg relative group">
+                        Главная
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A059] transition-all group-hover:w-full"></span>
+                    </a>
+                    <a href="/products" class="text-white hover:text-[#C5A059] transition-colors font-medium text-base lg:text-lg relative group">
+                        Продукты
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A059] transition-all group-hover:w-full"></span>
+                    </a>
+                    <a href="/about" class="text-white hover:text-[#C5A059] transition-colors font-medium text-base lg:text-lg relative group">
+                        О нас
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#C5A059] transition-all group-hover:w-full"></span>
+                    </a>
+                </div>
+                
+                <!-- Правая часть -->
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    {% if is_admin %}
+                    <a href="/admin" class="hidden sm:flex bg-[#C5A059] text-black px-4 sm:px-6 py-1.5 sm:py-2 rounded-full hover:bg-[#E5C687] transition items-center space-x-2 font-semibold text-sm sm:text-base">
+                        <i class="fas fa-crown"></i>
+                        <span class="hidden sm:inline">Админ</span>
+                    </a>
+                    {% else %}
+                    <a href="/admin/login" class="hidden sm:flex border border-[#C5A059] text-[#C5A059] px-4 sm:px-6 py-1.5 sm:py-2 rounded-full hover:bg-[#C5A059] hover:text-black transition items-center space-x-2 text-sm sm:text-base">
+                        <i class="fas fa-lock"></i>
+                        <span class="hidden sm:inline">Вход</span>
+                    </a>
+                    {% endif %}
+                    
+                    <!-- Гамбургер иконка -->
+                    <div class="hamburger md:hidden" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Хлебные крошки -->
+    <div class="pt-20 sm:pt-24 pb-4 sm:pb-6 bg-gradient-to-b from-gray-900 to-black">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="breadcrumbs flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-400">
+                <a href="/" class="hover:text-[#C5A059] transition whitespace-nowrap">Главная</a>
+                <i class="fas fa-chevron-right text-[0.5rem] sm:text-xs"></i>
+                <a href="/products" class="hover:text-[#C5A059] transition whitespace-nowrap">Продукты</a>
+                <i class="fas fa-chevron-right text-[0.5rem] sm:text-xs"></i>
+                {% if category %}
+                <a href="/products?category={{ category.id }}" class="hover:text-[#C5A059] transition whitespace-nowrap">{{ category.name }}</a>
+                <i class="fas fa-chevron-right text-[0.5rem] sm:text-xs"></i>
+                {% endif %}
+                <span class="text-[#C5A059] truncate">{{ product.name }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детальная информация о товаре -->
+    <section class="py-4 sm:py-6 lg:py-8">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+                <!-- Изображение товара -->
+                <div data-aos="fade-right" data-aos-duration="800">
+                    <div class="royal-glass rounded-2xl sm:rounded-3xl overflow-hidden p-3 sm:p-4">
+                        <div class="relative rounded-xl sm:rounded-2xl overflow-hidden">
+                            {% if product.image %}
+                            <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image w-full h-auto">
+                            {% else %}
+                            <div class="w-full h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                                <i class="fas fa-blinds text-6xl sm:text-7xl lg:text-8xl text-[#C5A059] opacity-40"></i>
+                            </div>
+                            {% endif %}
+                            
+                            {% if product.is_popular %}
+                            <div class="absolute top-3 sm:top-6 left-3 sm:left-6">
+                                <span class="bg-gradient-to-r from-[#C5A059] to-[#E5C687] text-black px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold">
+                                    <i class="fas fa-crown mr-1"></i>
+                                    ХИТ ПРОДАЖ
+                                </span>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Индикатор свайпа для мобильных -->
+                            <div class="absolute bottom-3 right-3 sm:hidden bg-black bg-opacity-50 rounded-full px-2 py-1 text-xs">
+                                <i class="fas fa-hand-pointer mr-1"></i>
+                                Нажми для увеличения
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Информация о товаре -->
+                <div data-aos="fade-left" data-aos-duration="800">
+                    <div class="mb-4 sm:mb-6">
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                            <span class="text-xs sm:text-sm text-gray-500">Артикул: <span class="text-[#C5A059] font-semibold">{{ product.product_id }}</span></span>
+                            {% if category %}
+                            <span class="text-xs sm:text-sm text-gray-500">Категория: <a href="/products?category={{ category.id }}" class="text-[#C5A059] hover:underline">{{ category.name }}</a></span>
+                            {% endif %}
+                        </div>
+                        
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl royal-font font-bold text-white mb-3 sm:mb-4">
+                            {{ product.name }}
+                        </h1>
+                        
+                        <!-- Статус наличия -->
+                        <div class="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+                            {% if product.in_stock %}
+                            <span class="bg-green-500 bg-opacity-20 text-green-500 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                В наличии
+                            </span>
+                            {% else %}
+                            <span class="bg-yellow-500 bg-opacity-20 text-yellow-500 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold">
+                                <i class="fas fa-clock mr-1"></i>
+                                Под заказ (3-5 дней)
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Цена -->
+                        <div class="mb-6 sm:mb-8">
+                            {% if product.price %}
+                            <div class="flex items-baseline flex-wrap gap-2">
+                                <span class="price-large font-bold royal-text">{{ "{:,.0f}".format(product.price) }} TJS</span>
+                                <span class="text-sm sm:text-base text-gray-400">за м²</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">Цена указана за стандартный размер. Индивидуальный расчет по запросу.</p>
+                            {% else %}
+                            <div class="text-2xl sm:text-3xl font-bold text-gray-300">Цена по запросу</div>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">Оставьте заявку, мы рассчитаем стоимость для вашего окна</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Кнопки -->
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8">
+                            <button onclick="openWhatsApp(
+                                '{{ product.product_id }}',
+                                '{{ product.name }}',
+                                '{% if product.price %}{{ product.price }} ₽{% else %}по запросу{% endif %}',
+                                '{{ category.name if category else "" }}'
+                            )" 
+                                    class="whatsapp-btn action-btn flex-1 tap-effect">
+                                <i class="fab fa-whatsapp text-lg sm:text-xl"></i>
+                                <span>Купить в WhatsApp</span>
+                            </button>
+                            
+                            {% if is_admin %}
+                            <a href="/admin/products/edit/{{ product.id }}" 
+                               class="bg-blue-500 bg-opacity-20 text-blue-400 border border-blue-500 border-opacity-30 action-btn hover:bg-blue-500 hover:text-white tap-effect">
+                                <i class="fas fa-edit"></i>
+                                <span>Редактировать</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Описание -->
+                    <div class="royal-glass rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl royal-font font-bold text-white mb-3 sm:mb-4 flex items-center">
+                            <i class="fas fa-align-left text-[#C5A059] mr-2 sm:mr-3"></i>
+                            Описание товара
+                        </h2>
+                        <p class="text-sm sm:text-base text-gray-300 leading-relaxed whitespace-pre-line">
+                            {{ product.description }}
+                        </p>
+                    </div>
+                    
+                    <!-- Характеристики -->
+                    <div class="royal-glass rounded-xl sm:rounded-2xl p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl royal-font font-bold text-white mb-3 sm:mb-4 flex items-center">
+                            <i class="fas fa-gear text-[#C5A059] mr-2 sm:mr-3"></i>
+                            Характеристики
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            {% if product.material %}
+                            <div class="characteristic-item flex items-center space-x-2 sm:space-x-3">
+                                <i class="fas fa-layer-group text-[#C5A059] text-sm sm:text-base"></i>
+                                <div>
+                                    <span class="text-xs text-gray-400">Материал</span>
+                                    <p class="text-sm sm:text-base font-semibold text-white">{{ product.material }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if product.sizes %}
+                            <div class="characteristic-item flex items-center space-x-2 sm:space-x-3">
+                                <i class="fas fa-ruler text-[#C5A059] text-sm sm:text-base"></i>
+                                <div>
+                                    <span class="text-xs text-gray-400">Макс. размеры</span>
+                                    <p class="text-sm sm:text-base font-semibold text-white">{{ product.sizes }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="characteristic-item flex items-center space-x-2 sm:space-x-3">
+                                <i class="fas fa-crown text-[#C5A059] text-sm sm:text-base"></i>
+                                <div>
+                                    <span class="text-xs text-gray-400">Категория</span>
+                                    <p class="text-sm sm:text-base font-semibold text-white">{{ category.name if category else 'Жалюзи' }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="characteristic-item flex items-center space-x-2 sm:space-x-3">
+                                <i class="fas fa-calendar text-[#C5A059] text-sm sm:text-base"></i>
+                                <div>
+                                    <span class="text-xs text-gray-400">Добавлен</span>
+                                    <p class="text-sm sm:text-base font-semibold text-white">{{ product.created_at.strftime('%d.%m.%Y') if product.created_at else '2024' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Похожие товары -->
+    {% if related_products %}
+    <section class="py-10 sm:py-16 lg:py-20">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="text-center mb-6 sm:mb-8 lg:mb-12" data-aos="fade-up" data-aos-duration="800">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl royal-font font-bold mb-2 sm:mb-3 lg:mb-4">
+                    <span class="royal-text">Похожие</span>
+                    <span class="text-white block sm:inline"> модели</span>
+                </h2>
+                <p class="text-sm sm:text-base lg:text-xl text-gray-400">Вам также может понравиться</p>
+            </div>
+            
+            <!-- Мобильная свайп-галерея похожих товаров -->
+            <div class="lg:hidden">
+                <div class="swiper relatedSwiper">
+                    <div class="swiper-wrapper">
+                        {% for related in related_products %}
+                        <div class="swiper-slide">
+                            <div class="product-card rounded-2xl overflow-hidden">
+                                <div class="relative h-48 sm:h-56 overflow-hidden">
+                                    {% if related.image %}
+                                    <img src="{{ related.image }}" alt="{{ related.name }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                    <div class="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                                        <i class="fas fa-blinds text-4xl sm:text-5xl text-[#C5A059] opacity-40"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="p-3 sm:p-4">
+                                    <span class="text-[0.6rem] sm:text-xs text-[#C5A059]">{{ related.product_id }}</span>
+                                    <h3 class="text-sm sm:text-base lg:text-lg royal-font font-bold text-white mb-1 sm:mb-2">{{ related.name }}</h3>
+                                    <div class="flex items-center justify-between">
+                                        {% if related.price %}
+                                        <span class="text-sm sm:text-base lg:text-lg font-bold text-[#C5A059]">{{ related.price }} ₽</span>
+                                        {% else %}
+                                        <span class="text-xs text-gray-400">По запросу</span>
+                                        {% endif %}
+                                        <a href="/product/{{ related.product_id }}" class="text-white hover:text-[#C5A059] transition">
+                                            <i class="fas fa-arrow-right text-sm sm:text-base"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="swiper-pagination mt-3"></div>
+                </div>
+            </div>
+            
+            <!-- Десктопная сетка -->
+            <div class="hidden lg:grid grid-cols-4 gap-6">
+                {% for related in related_products %}
+                <div class="product-card rounded-2xl overflow-hidden group" data-aos="fade-up" data-aos-duration="800">
+                    <div class="relative h-56 overflow-hidden">
+                        {% if related.image %}
+                        <img src="{{ related.image }}" alt="{{ related.name }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                        {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                            <i class="fas fa-blinds text-5xl text-[#C5A059] opacity-40"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="p-4">
+                        <span class="text-xs text-[#C5A059]">{{ related.product_id }}</span>
+                        <h3 class="text-lg royal-font font-bold text-white mb-2">{{ related.name }}</h3>
+                        <div class="flex items-center justify-between">
+                            {% if related.price %}
+                            <span class="text-lg font-bold text-[#C5A059]">{{ related.price }} ₽</span>
+                            {% else %}
+                            <span class="text-sm text-gray-400">По запросу</span>
+                            {% endif %}
+                            <a href="/product/{{ related.product_id }}" class="text-white hover:text-[#C5A059] transition">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Футер -->
+    <footer class="bg-black border-t border-gray-800 py-8 sm:py-12">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 sm:space-x-3 mb-4 md:mb-0">
+                    <i class="fas fa-crown text-2xl sm:text-3xl royal-text crown-animation"></i>
+                    <span class="text-xl sm:text-2xl font-bold royal-font">
+                        <span class="royal-text">Королевские Жалюзи</span>
+                        <span class="text-white hidden xs:inline"> Жалюзи</span>
+                    </span>
+                </div>
+                <div class="text-gray-400 text-center md:text-left text-xs sm:text-sm">
+                    <p>© 2015-2024 Королевские Жалюзи. 9 лет качества.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Плавающая WhatsApp кнопка -->
+    <button onclick="openWhatsApp(
+        '{{ product.product_id }}',
+        '{{ product.name }}',
+        '{% if product.price %}{{ product.price }} ₽{% else %}по запросу{% endif %}',
+        '{{ category.name if category else "" }}'
+    )" class="whatsapp-float tap-effect">
+        <i class="fab fa-whatsapp text-2xl sm:text-3xl"></i>
+    </button>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Инициализация AOS
+        AOS.init({
+            duration: 800,
+            once: false,
+            mirror: true,
+            disable: function() {
+                return window.innerWidth < 768;
+            }
+        });
+        
+        // Мобильное меню
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+        
+        if (hamburger) {
+            hamburger.addEventListener('click', function() {
+                this.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+        }
+        
+        if (menuOverlay) {
+            menuOverlay.addEventListener('click', function() {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        const menuLinks = mobileMenu?.querySelectorAll('a');
+        menuLinks?.forEach(link => {
+            link.addEventListener('click', function() {
+                hamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                menuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Инициализация свайп-галереи для похожих товаров на мобильных
+        if (window.innerWidth < 1024) {
+            const relatedSwiper = new Swiper('.relatedSwiper', {
+                slidesPerView: 1.5,
+                spaceBetween: 16,
+                centeredSlides: false,
+                loop: true,
+                pagination: {
+                    el: '.relatedSwiper .swiper-pagination',
+                    clickable: true,
+                },
+                breakpoints: {
+                    640: {
+                        slidesPerView: 2.5,
+                        spaceBetween: 20,
+                    }
+                }
+            });
+        }
+        
+        // Touch эффекты
+        document.querySelectorAll('.tap-effect').forEach(el => {
+            el.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.97)';
+            });
+            el.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            });
+            el.addEventListener('touchcancel', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Увеличение изображения по клику на мобильных
+        const productImage = document.querySelector('.product-image');
+        if (productImage && window.innerWidth < 768) {
+            productImage.addEventListener('click', function() {
+                this.style.transform = 'scale(1.5)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 300);
+            });
+        }
+        
+        // Обработка resize
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                if (window.innerWidth >= 1024) {
+                    hamburger?.classList.remove('active');
+                    mobileMenu?.classList.remove('active');
+                    menuOverlay?.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }, 250);
+        });
+    </script>
+</body>
+</html>
