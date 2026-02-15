@@ -4,7 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>{{ product.name }} | Королевские Жалюзи</title>
+    <!-- ОЧЕНЬ ВАЖНО - уникальный title для каждого товара! -->
+<title>{{ product.name }} купить в Худжанде | {{ product.category.name }} | Королевские Жалюзи</title>
+<meta name="description" content="🪟 {{ product.name }} в Худжанде. {% if product.material %}Материал: {{ product.material }}. {% endif %}{% if product.sizes %}Размеры: {{ product.sizes }}. {% endif %}Турецкие материалы, гарантия 5 лет. Доставка и установка. Артикул: {{ product.product_id }}. Закажите сейчас!">
+
+<meta name="keywords" content="{{ product.name }}, {{ product.category.name }}, купить {{ product.name }} в худжанде, {{ product.material }}, жалюзи {{ product.category.name|lower }}, цена жалюзи">
+
+<!-- UNIQUE для каждого товара -->
+<meta property="og:title" content="{{ product.name }} - купить в Худжанде | Королевские Жалюзи">
+<meta property="og:description" content="{{ product.description[:150] }}... Артикул: {{ product.product_id }}. В наличии!">
+<meta property="og:url" content="https://korolevskie-zhalyuzi.onrender.com/product/{{ product.product_id }}">
+<meta property="og:image" content="{{ product.image or 'https://korolevskie-zhalyuzi.onrender.com/static/default-product.jpg' }}">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
