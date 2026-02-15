@@ -884,5 +884,32 @@
             }, 250);
         });
     </script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "image": "{{ product.image or 'https://korolevskie-zhalyuzi.onrender.com/static/default-product.jpg' }}",
+  "description": "{{ product.description|escapejs }}",
+  "sku": "{{ product.product_id }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "Королевские Жалюзи"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "https://korolevskie-zhalyuzi.onrender.com/product/{{ product.product_id }}",
+    "priceCurrency": "TJS",
+    "price": "{% if product.price %}{{ product.price }}{% else %}0{% endif %}",
+    "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/PreOrder{% endif %}",
+    "seller": {
+      "@type": "Organization",
+      "name": "Королевские Жалюзи"
+    }
+  }
+}
+</script>
+    
 </body>
 </html>
