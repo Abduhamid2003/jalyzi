@@ -38,6 +38,14 @@ def from_json(value):
 # Регистрируем фильтр в Jinja2
 templates.env.filters['from_json'] = from_json
 
+def escapejs(value):
+    """Экранирует строку для безопасного использования в JavaScript"""
+    if value is None:
+        return ''
+    return json.dumps(str(value))[1:-1]
+
+templates.env.filters['escapejs'] = escapejs
+
 # База данных
 SQLALCHEMY_DATABASE_URL = "sqlite:///./royal_blinds.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
