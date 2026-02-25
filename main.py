@@ -39,6 +39,14 @@ def from_json(value):
 # Регистрируем фильтр в Jinja2
 templates.env.filters['from_json'] = from_json
 
+def escapejs(value):
+    """Экранирует строку для безопасного использования в JavaScript"""
+    if value is None:
+        return ''
+    return json.dumps(str(value))[1:-1]
+
+templates.env.filters['escapejs'] = escapejs
+
 # База данных
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres.vtmerinbshexulrevael:wpkdbGv7HHm5ohnv@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

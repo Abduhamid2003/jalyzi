@@ -4,7 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>{{ product.name }} | Королевские Жалюзи</title>
+    <!-- ОЧЕНЬ ВАЖНО - уникальный title для каждого товара! -->
+<title>{{ product.name }} купить в Худжанде | {{ product.category.name }} | Королевские Жалюзи</title>
+<meta name="description" content="🪟 {{ product.name }} в Худжанде. {% if product.material %}Материал: {{ product.material }}. {% endif %}{% if product.sizes %}Размеры: {{ product.sizes }}. {% endif %}Турецкие материалы, гарантия 5 лет. Доставка и установка. Артикул: {{ product.product_id }}. Закажите сейчас!">
+
+<meta name="keywords" content="{{ product.name }}, {{ product.category.name }}, купить {{ product.name }} в худжанде, {{ product.material }}, жалюзи {{ product.category.name|lower }}, цена жалюзи">
+
+<!-- UNIQUE для каждого товара -->
+<meta property="og:title" content="{{ product.name }} - купить в Худжанде | Королевские Жалюзи">
+<meta property="og:description" content="{{ product.description[:150] }}... Артикул: {{ product.product_id }}. В наличии!">
+<meta property="og:url" content="https://korolevskie-zhalyuzi.onrender.com/product/{{ product.product_id }}">
+<meta property="og:image" content="{{ product.image or 'https://korolevskie-zhalyuzi.onrender.com/static/default-product.jpg' }}">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -945,6 +955,7 @@
         });
     </script>
 
+<<<<<<< HEAD
     <script>
     // Данные изображений
     const productImages = [
@@ -1083,5 +1094,33 @@
     });
 </script>
 
+=======
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "image": "{{ product.image or 'https://korolevskie-zhalyuzi.onrender.com/static/default-product.jpg' }}",
+  "description": "{{ product.description|escapejs }}",
+  "sku": "{{ product.product_id }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "Королевские Жалюзи"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "https://korolevskie-zhalyuzi.onrender.com/product/{{ product.product_id }}",
+    "priceCurrency": "TJS",
+    "price": "{% if product.price %}{{ product.price }}{% else %}0{% endif %}",
+    "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/PreOrder{% endif %}",
+    "seller": {
+      "@type": "Organization",
+      "name": "Королевские Жалюзи"
+    }
+  }
+}
+</script>
+    
+>>>>>>> a71ba4c205e50ff7efa846d2f9cbac1f67faefbb
 </body>
 </html>
