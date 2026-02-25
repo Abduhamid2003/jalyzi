@@ -707,6 +707,14 @@
                     </div>
                     {% endif %}
                     
+                    <!-- В карточке товара добавьте индикатор количества фото -->
+{% if product.get_images_list()|length > 1 %}
+<div class="absolute bottom-2 right-2 z-20 bg-black bg-opacity-70 text-white px-2 py-1 rounded-full text-xs">
+    <i class="fas fa-images mr-1"></i>
+    {{ product.get_images_list()|length }}
+</div>
+{% endif %}
+
                     <div class="relative h-48 sm:h-56 md:h-64 lg:h-72 image-zoom">
                         {% if product.image %}
                         <img src="{{ product.image }}" 

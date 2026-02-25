@@ -1,4 +1,4 @@
-<!-- templates/admin/edit_product.html -->
+<!-- templates/admin/edit_product.html - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -31,13 +31,78 @@
             border: 1px solid rgba(197, 160, 89, 0.2);
         }
         
-        .preview-image {
+        .image-item {
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: move;
+            user-select: none;
+        }
+        
+        .image-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        .image-item .delete-btn {
+            opacity: 0;
             transition: all 0.3s ease;
         }
         
-        .preview-image:hover {
-            transform: scale(1.02);
-            box-shadow: 0 10px 30px -10px rgba(197, 160, 89, 0.5);
+        .image-item:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .image-item .order-badge {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(197, 160, 89, 0.9);
+            color: black;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+        }
+        
+        .drag-over {
+            border: 2px dashed #C5A059 !important;
+            background: rgba(197, 160, 89, 0.1);
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .image-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .image-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .selected-for-delete {
+            border: 3px solid #ef4444 !important;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -98,7 +163,7 @@
                         <span class="royal-text">Редактирование</span>
                         <span class="text-white"> товара</span>
                     </h1>
-                    <p class="text-gray-400 mt-2">Артикул: <span class="text-[#C5A059]">{{ product.product_id }}</span></p>
+                    <p class="text-gray-400 mt-2">Артикул: <span class="text-[#C5A059]" id="productSku">{{ product.product_id }}</span></p>
                 </div>
                 
                 <div class="flex space-x-4">
@@ -116,7 +181,8 @@
                 </div>
             </div>
             
-            <form method="post" action="/admin/products/update/{{ product.id }}" enctype="multipart/form-data" class="space-y-6">
+            <form method="post" action="/admin/products/update/{{ product.id }}" enctype="multipart/form-data" class="space-y-6" id="productForm">
+                <!-- Основная информация -->
                 <div class="glass-card rounded-xl p-6">
                     <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
                         <i class="fas fa-info-circle text-[#C5A059] mr-2"></i>
@@ -163,6 +229,7 @@
                     </div>
                 </div>
                 
+                <!-- Характеристики -->
                 <div class="glass-card rounded-xl p-6">
                     <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
                         <i class="fas fa-gear text-[#C5A059] mr-2"></i>
@@ -186,45 +253,151 @@
                     </div>
                 </div>
                 
+                <!-- Изображения товара -->
                 <div class="glass-card rounded-xl p-6">
                     <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
-                        <i class="fas fa-image text-[#C5A059] mr-2"></i>
-                        Изображение товара
+                        <i class="fas fa-images text-[#C5A059] mr-2"></i>
+                        Менеджер изображений
                     </h2>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Скрытое поле для хранения порядка изображений -->
+                    <input type="hidden" name="image_order" id="imageOrder" value="">
+                    
+                    <!-- Скрытое поле для удаленных изображений -->
+                    <input type="hidden" name="deleted_images" id="deletedImages" value="[]">
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <!-- Текущие изображения -->
                         <div>
-                            <label class="block text-gray-400 mb-2 text-sm">Текущее изображение</label>
-                            {% if product.image %}
-                            <div class="mb-4">
-                                <img src="{{ product.image }}" alt="{{ product.name }}" class="preview-image w-64 h-64 object-cover rounded-lg border border-[#C5A059] border-opacity-30">
-                                <p class="text-xs text-gray-500 mt-2">Текущее фото товара</p>
+                            <div class="flex justify-between items-center mb-3">
+                                <label class="text-gray-400 text-sm font-semibold">Текущие изображения</label>
+                                <div class="flex space-x-2">
+                                    <button type="button" onclick="selectAllForDelete()" class="text-xs text-blue-400 hover:underline">
+                                        Выбрать все
+                                    </button>
+                                    <span class="text-gray-600">|</span>
+                                    <button type="button" onclick="deleteSelectedImages()" class="text-xs text-red-400 hover:underline">
+                                        Удалить выбранные
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {% set images_list = product.get_images_list() %}
+                            {% if images_list %}
+                            <div id="imageGrid" class="image-grid">
+                                {% for img_path in images_list %}
+                                <div class="image-item relative bg-gray-900 rounded-lg p-2 border border-gray-700" 
+                                     data-index="{{ loop.index0 }}" 
+                                     data-path="{{ img_path }}"
+                                     draggable="true"
+                                     ondragstart="dragStart(event)"
+                                     ondragend="dragEnd(event)"
+                                     ondragover="dragOver(event)"
+                                     ondrop="drop(event)">
+                                    
+                                    <!-- Порядковый номер -->
+                                    <div class="order-badge">{{ loop.index }}</div>
+                                    
+                                    <!-- Чекбокс для удаления -->
+                                    <div class="absolute top-1 right-1 z-20">
+                                        <input type="checkbox" 
+                                               class="delete-checkbox w-4 h-4 rounded border-gray-600 text-red-500 focus:ring-red-500"
+                                               onchange="toggleImageForDelete(this, '{{ img_path }}')">
+                                    </div>
+                                    
+                                    <!-- Изображение -->
+                                    <img src="{{ img_path }}" alt="{{ product.name }}" 
+                                         class="preview-image cursor-move">
+                                    
+                                    <!-- Индикатор перетаскивания -->
+                                    <div class="absolute bottom-1 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
+                                        <i class="fas fa-grip-lines"></i>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="flex justify-between items-center mt-3">
+                                <p class="text-sm text-gray-400">
+                                    <i class="fas fa-images mr-1 text-[#C5A059]"></i>
+                                    Всего изображений: <span id="imageCount">{{ images_list|length }}</span>
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    <i class="fas fa-arrows-alt mr-1"></i>
+                                    Перетащите для изменения порядка
+                                </p>
                             </div>
                             {% else %}
-                            <div class="w-64 h-64 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center mb-4">
-                                <i class="fas fa-blinds text-6xl text-[#C5A059] opacity-40"></i>
+                            <div class="bg-gray-900 rounded-lg p-12 text-center">
+                                <i class="fas fa-image text-5xl text-gray-700 mb-3"></i>
+                                <p class="text-gray-400 mb-2">Нет изображений</p>
+                                <p class="text-xs text-gray-500">Загрузите изображения ниже</p>
                             </div>
-                            <p class="text-xs text-gray-500">Нет изображения</p>
                             {% endif %}
                         </div>
                         
-                        <div>
-                            <label class="block text-gray-400 mb-2 text-sm">Загрузить новое изображение</label>
-                            <input type="file" name="image" accept="image/*"
-                                   class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#C5A059] file:text-black file:font-semibold hover:file:bg-[#E5C687]">
-                            <p class="text-xs text-gray-500 mt-2">Оставьте пустым, чтобы сохранить текущее изображение</p>
+                        <!-- Загрузка новых изображений -->
+                        <div class="mt-4 pt-4 border-t border-gray-800">
+                            <label class="block text-gray-400 mb-3 text-sm font-semibold">Загрузить новые изображения</label>
+                            
+                            <div class="bg-gray-900 bg-opacity-50 rounded-lg p-6 mb-4 border-2 border-dashed border-gray-700 hover:border-[#C5A059] transition">
+                                <div class="text-center">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-600 mb-2"></i>
+                                    <p class="text-sm text-gray-400 mb-2">Перетащите файлы сюда или</p>
+                                    <input type="file" name="images" accept="image/*" multiple
+                                           class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-[#C5A059] file:text-black file:font-semibold hover:file:bg-[#E5C687] cursor-pointer">
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Можно выбрать несколько файлов (Ctrl/Cmd + клик)
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Режим обработки изображений -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div class="bg-gray-900 bg-opacity-30 rounded-lg p-4">
+                                    <label class="flex items-start space-x-3 cursor-pointer">
+                                        <input type="radio" name="image_mode" value="append" checked 
+                                               class="mt-1 w-4 h-4 border-gray-600 text-[#C5A059] focus:ring-[#C5A059]">
+                                        <div>
+                                            <span class="text-sm font-semibold text-white block">Добавить к существующим</span>
+                                            <span class="text-xs text-gray-400">Новые фото добавятся к текущим</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div class="bg-gray-900 bg-opacity-30 rounded-lg p-4">
+                                    <label class="flex items-start space-x-3 cursor-pointer">
+                                        <input type="radio" name="image_mode" value="replace" 
+                                               class="mt-1 w-4 h-4 border-gray-600 text-[#C5A059] focus:ring-[#C5A059]">
+                                        <div>
+                                            <span class="text-sm font-semibold text-white block">Заменить все</span>
+                                            <span class="text-xs text-gray-400">Удалить текущие и загрузить новые</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Информация о выбранных файлах -->
+                            <div id="fileInfo" class="mt-4 p-3 bg-blue-900 bg-opacity-20 border border-blue-500 border-opacity-30 rounded-lg hidden">
+                                <p class="text-sm text-blue-400 flex items-center">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <span id="fileCount">0</span> файлов выбрано
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
+                <!-- Статус и настройки -->
                 <div class="glass-card rounded-xl p-6">
                     <h2 class="text-xl royal-font font-bold text-white mb-4 flex items-center">
                         <i class="fas fa-tags text-[#C5A059] mr-2"></i>
                         Статус и настройки
                     </h2>
                     
-                    <div class="flex flex-col space-y-4">
-                        <div class="flex items-center space-x-6">
+                    <div class="space-y-4">
+                        <div class="flex flex-wrap gap-6">
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" name="in_stock" value="true" {% if product.in_stock %}checked{% endif %} 
                                        class="w-5 h-5 rounded border-gray-600 text-[#C5A059] focus:ring-[#C5A059] focus:ring-offset-0 bg-black">
@@ -238,19 +411,31 @@
                             </label>
                         </div>
                         
-                        <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4 mt-2">
-                            <p class="text-sm text-gray-400">
-                                <i class="fas fa-info-circle mr-1 text-[#C5A059]"></i>
-                                <span class="font-semibold text-white">В наличии:</span> Если галочка стоит - товар отображается как "В наличии", если убрать - как "Под заказ"
-                            </p>
-                            <p class="text-sm text-gray-400 mt-2">
-                                <i class="fas fa-info-circle mr-1 text-[#C5A059]"></i>
-                                <span class="font-semibold text-white">Хит продаж:</span> Товар появится на главной странице в блоке "Бестселлеры"
-                            </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4">
+                                <div class="flex items-start space-x-2">
+                                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">В наличии</p>
+                                        <p class="text-xs text-gray-400">Если галочка стоит - товар отображается как "В наличии"</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-900 bg-opacity-50 rounded-lg p-4">
+                                <div class="flex items-start space-x-2">
+                                    <i class="fas fa-crown text-[#C5A059] mt-1"></i>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Хит продаж</p>
+                                        <p class="text-xs text-gray-400">Товар появится на главной странице в блоке "Бестселлеры"</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
+                <!-- Кнопки действий -->
                 <div class="flex justify-end space-x-4">
                     <a href="/admin/products" 
                        class="px-8 py-3 border border-gray-700 rounded-lg text-gray-400 hover:bg-gray-800 transition font-medium">
@@ -266,25 +451,259 @@
         </div>
     </div>
     
-    <script>
-        // Предпросмотр изображения перед загрузкой
-        document.querySelector('input[name="image"]')?.addEventListener('change', function(e) {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Создаем уведомление о выборе файла
-                    alert('Изображение выбрано: ' + this.files[0].name + '\nОно будет загружено при сохранении.');
-                }.bind(this);
-                reader.readAsDataURL(this.files[0]);
+   <script>
+    // ===== ПЕРЕМЕННЫЕ =====
+    let imagesToDelete = [];
+    let draggedItem = null;
+    
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== СТРАНИЦА ЗАГРУЖЕНА ===');
+        updateImageOrder();
+        setupFileInput();
+        
+        // Проверяем скрытые поля
+        console.log('Initial imageOrder:', document.getElementById('imageOrder').value);
+        console.log('Initial deletedImages:', document.getElementById('deletedImages').value);
+    });
+    
+    // Обновление порядка изображений
+    function updateImageOrder() {
+        const items = document.querySelectorAll('.image-item');
+        const order = [];
+        
+        items.forEach((item, index) => {
+            const path = item.dataset.path;
+            if (path) {
+                order.push(path);
+            }
+            
+            // Обновляем номер
+            const badge = item.querySelector('.order-badge');
+            if (badge) badge.textContent = index + 1;
+        });
+        
+        document.getElementById('imageOrder').value = JSON.stringify(order);
+        console.log('Порядок изображений обновлен:', order);
+    }
+    
+    // Переключение удаления изображения
+    function toggleImageForDelete(checkbox, imagePath) {
+        console.log('Переключение удаления:', imagePath, 'Чекбокс:', checkbox.checked);
+        
+        const item = checkbox.closest('.image-item');
+        
+        if (checkbox.checked) {
+            // Добавляем в список удаления
+            if (!imagesToDelete.includes(imagePath)) {
+                imagesToDelete.push(imagePath);
+            }
+            item.classList.add('selected-for-delete');
+        } else {
+            // Убираем из списка удаления
+            imagesToDelete = imagesToDelete.filter(path => path !== imagePath);
+            item.classList.remove('selected-for-delete');
+        }
+        
+        // Обновляем скрытое поле
+        const deletedImagesJson = JSON.stringify(imagesToDelete);
+        document.getElementById('deletedImages').value = deletedImagesJson;
+        
+        console.log('Текущий список удаления:', imagesToDelete);
+        console.log('deletedImages value:', document.getElementById('deletedImages').value);
+    }
+    
+    // Выбрать все для удаления
+    function selectAllForDelete() {
+        const checkboxes = document.querySelectorAll('.delete-checkbox');
+        const allSelected = [...checkboxes].every(cb => cb.checked);
+        
+        checkboxes.forEach(cb => {
+            cb.checked = !allSelected;
+            const imagePath = cb.closest('.image-item').dataset.path;
+            
+            if (!allSelected) {
+                if (!imagesToDelete.includes(imagePath)) {
+                    imagesToDelete.push(imagePath);
+                }
+                cb.closest('.image-item').classList.add('selected-for-delete');
+            } else {
+                imagesToDelete = imagesToDelete.filter(path => path !== imagePath);
+                cb.closest('.image-item').classList.remove('selected-for-delete');
             }
         });
         
-        // Подтверждение отправки формы
-        document.querySelector('form')?.addEventListener('submit', function(e) {
-            if (!confirm('Сохранить изменения?')) {
-                e.preventDefault();
+        document.getElementById('deletedImages').value = JSON.stringify(imagesToDelete);
+        console.log('Выбраны все. Список удаления:', imagesToDelete);
+    }
+    
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ =====
+    function deleteSelectedImages() {
+        if (imagesToDelete.length === 0) {
+            alert('Не выбрано ни одного изображения для удаления');
+            return;
+        }
+        
+        if (!confirm(`Удалить выбранные изображения (${imagesToDelete.length})?`)) {
+            return;
+        }
+        
+        console.log('Удаляем из DOM изображения:', imagesToDelete);
+        
+        // Удаляем элементы из DOM
+        imagesToDelete.forEach(path => {
+            const item = document.querySelector(`.image-item[data-path="${path}"]`);
+            if (item) {
+                item.remove();
+                console.log('Удален из DOM:', path);
             }
         });
-    </script>
+        
+        // ВАЖНО: НЕ очищаем imagesToDelete, они остаются для отправки на сервер!
+        // imagesToDelete = [];  <- НЕ ДЕЛАЙТЕ ЭТОГО!
+        
+        // Обновляем скрытое поле с удаленными изображениями
+        document.getElementById('deletedImages').value = JSON.stringify(imagesToDelete);
+        
+        console.log('Изображения для удаления (будут отправлены на сервер):', imagesToDelete);
+        
+        // Обновляем порядок оставшихся изображений
+        updateImageOrder();
+        
+        // Обновляем счетчик
+        const newCount = document.querySelectorAll('.image-item').length;
+        document.getElementById('imageCount').textContent = newCount;
+        
+        // Если изображений не осталось, показываем заглушку
+        if (newCount === 0) {
+            const grid = document.getElementById('imageGrid');
+            if (grid) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-gray-900 rounded-lg p-12 text-center">
+                        <i class="fas fa-image text-5xl text-gray-700 mb-3"></i>
+                        <p class="text-gray-400 mb-2">Нет изображений</p>
+                        <p class="text-xs text-gray-500">Загрузите изображения ниже</p>
+                    </div>
+                `;
+            }
+        }
+    }
+    
+    // Drag & Drop функции
+    function dragStart(event) {
+        draggedItem = event.target.closest('.image-item');
+        event.dataTransfer.setData('text/plain', '');
+        draggedItem.classList.add('dragging');
+        console.log('Drag start');
+    }
+    
+    function dragEnd(event) {
+        document.querySelectorAll('.image-item').forEach(item => {
+            item.classList.remove('dragging', 'drag-over');
+        });
+        console.log('Drag end');
+    }
+    
+    function dragOver(event) {
+        event.preventDefault();
+        const target = event.target.closest('.image-item');
+        if (target && target !== draggedItem) {
+            target.classList.add('drag-over');
+        }
+    }
+    
+    function drop(event) {
+        event.preventDefault();
+        const target = event.target.closest('.image-item');
+        if (!target || target === draggedItem) return;
+        
+        target.classList.remove('drag-over');
+        
+        const grid = document.getElementById('imageGrid');
+        const items = [...grid.children];
+        const fromIndex = items.indexOf(draggedItem);
+        const toIndex = items.indexOf(target);
+        
+        if (fromIndex < toIndex) {
+            target.insertAdjacentElement('afterend', draggedItem);
+        } else {
+            target.insertAdjacentElement('beforebegin', draggedItem);
+        }
+        
+        updateImageOrder();
+        console.log('Drop completed');
+    }
+    
+    // Настройка input file
+    function setupFileInput() {
+        const fileInput = document.querySelector('input[name="images"]');
+        if (!fileInput) return;
+        
+        fileInput.addEventListener('change', function() {
+            const fileInfo = document.getElementById('fileInfo');
+            const fileCount = document.getElementById('fileCount');
+            
+            if (this.files.length > 0) {
+                fileCount.textContent = this.files.length;
+                fileInfo.classList.remove('hidden');
+                console.log('Выбрано файлов для загрузки:', this.files.length);
+                
+                // Показываем имена файлов
+                const fileNames = [];
+                for (let i = 0; i < Math.min(this.files.length, 3); i++) {
+                    fileNames.push(this.files[i].name);
+                }
+                console.log('Файлы:', fileNames.join(', ') + (this.files.length > 3 ? ` и еще ${this.files.length - 3}` : ''));
+            } else {
+                fileInfo.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Отправка формы
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        console.log('=== ОТПРАВКА ФОРМЫ ===');
+        
+        // Проверяем удаленные изображения
+        const deletedValue = document.getElementById('deletedImages').value;
+        console.log('Отправляемые deleted_images:', deletedValue);
+        
+        // Проверяем порядок изображений
+        const orderValue = document.getElementById('imageOrder').value;
+        console.log('Отправляемый image_order:', orderValue);
+        
+        // Проверяем режим
+        const mode = document.querySelector('input[name="image_mode"]:checked')?.value;
+        console.log('Режим:', mode);
+        
+        // Проверяем, что deleted_images содержит правильные значения
+        try {
+            const deleted = JSON.parse(deletedValue || '[]');
+            if (deleted.length > 0) {
+                console.log('⚠️ БУДУТ УДАЛЕНЫ СЛЕДУЮЩИЕ ИЗОБРАЖЕНИЯ:', deleted);
+            }
+        } catch (e) {
+            console.error('Ошибка при парсинге deleted_images:', e);
+        }
+        
+        // Проверяем файлы
+        const fileInput = document.querySelector('input[name="images"]');
+        if (fileInput && fileInput.files.length > 0) {
+            console.log('Загружается файлов:', fileInput.files.length);
+        }
+        
+        return true;
+    });
+    
+    // Двойной клик для просмотра
+    document.querySelectorAll('.image-item').forEach(item => {
+        item.addEventListener('dblclick', function() {
+            const img = this.querySelector('img');
+            if (img) {
+                window.open(img.src, '_blank');
+            }
+        });
+    });
+</script>
 </body>
 </html>

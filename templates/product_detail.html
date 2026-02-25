@@ -499,38 +499,84 @@
     </div>
 
     <!-- Детальная информация о товаре -->
-    <section class="py-4 sm:py-6 lg:py-8">
-        <div class="container mx-auto px-4 sm:px-6">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-                <!-- Изображение товара -->
-                <div data-aos="fade-right" data-aos-duration="800">
-                    <div class="royal-glass rounded-2xl sm:rounded-3xl overflow-hidden p-3 sm:p-4">
-                        <div class="relative rounded-xl sm:rounded-2xl overflow-hidden">
-                            {% if product.image %}
-                            <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image w-full h-auto">
-                            {% else %}
-                            <div class="w-full h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                                <i class="fas fa-blinds text-6xl sm:text-7xl lg:text-8xl text-[#C5A059] opacity-40"></i>
-                            </div>
-                            {% endif %}
-                            
-                            {% if product.is_popular %}
-                            <div class="absolute top-3 sm:top-6 left-3 sm:left-6">
-                                <span class="bg-gradient-to-r from-[#C5A059] to-[#E5C687] text-black px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold">
-                                    <i class="fas fa-crown mr-1"></i>
-                                    ХИТ ПРОДАЖ
-                                </span>
-                            </div>
-                            {% endif %}
-                            
-                            <!-- Индикатор свайпа для мобильных -->
-                            <div class="absolute bottom-3 right-3 sm:hidden bg-black bg-opacity-50 rounded-full px-2 py-1 text-xs">
-                                <i class="fas fa-hand-pointer mr-1"></i>
-                                Нажми для увеличения
-                            </div>
+<section class="py-4 sm:py-6 lg:py-8">
+    <div class="container mx-auto px-4 sm:px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+            <!-- Изображение товара с галереей -->
+            <div data-aos="fade-right" data-aos-duration="800">
+                <div class="royal-glass rounded-2xl sm:rounded-3xl overflow-hidden p-3 sm:p-4">
+                    <!-- Основное изображение с индикатором -->
+                    <div class="relative rounded-xl sm:rounded-2xl overflow-hidden mb-3 group">
+                        {% set images = product.get_images_list() %}
+                        {% if images %}
+                        <img id="mainProductImage" src="{{ images[0] }}" alt="{{ product.name }}" 
+                             class="product-image w-full h-auto cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                             onclick="openLightbox(0)">
+                        
+                        <!-- Индикатор текущего изображения -->
+                        <div class="absolute top-3 left-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-10">
+                            <span id="currentImageIndex">1</span>/<span id="totalImages">{{ images|length }}</span>
                         </div>
+                        
+                        <!-- Кнопки навигации по изображениям -->
+                        <button onclick="prevImage()" 
+                                class="absolute left-3 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#C5A059] hover:text-black transition z-20 opacity-0 group-hover:opacity-100">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        
+                        <button onclick="nextImage()" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#C5A059] hover:text-black transition z-20 opacity-0 group-hover:opacity-100">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <!-- Кнопка возврата к первому изображению (показывается если не на первом) -->
+                        <button id="resetImageBtn" onclick="resetToFirstImage()" 
+                                class="absolute bottom-3 right-3 bg-[#C5A059] text-black px-3 py-1 rounded-full text-sm font-semibold hover:bg-[#E5C687] transition z-20 hidden items-center space-x-1">
+                            <i class="fas fa-undo-alt"></i>
+                            <span>Вернуться</span>
+                        </button>
+                        
+                        {% else %}
+                        <div class="w-full h-64 sm:h-80 lg:h-96 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                            <i class="fas fa-blinds text-6xl sm:text-7xl lg:text-8xl text-[#C5A059] opacity-40"></i>
+                        </div>
+                        {% endif %}
+                        
+                        {% if product.is_popular %}
+                        <div class="absolute top-3 sm:top-6 left-3 sm:left-6 z-10">
+                            <span class="bg-gradient-to-r from-[#C5A059] to-[#E5C687] text-black px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold">
+                                <i class="fas fa-crown mr-1"></i>
+                                ХИТ ПРОДАЖ
+                            </span>
+                        </div>
+                        {% endif %}
                     </div>
+                    
+                    <!-- Миниатюры всех изображений -->
+                    {% if images|length > 1 %}
+                    <div class="grid grid-cols-5 gap-2 mt-3">
+                        {% for img in images %}
+                        <div class="cursor-pointer rounded-lg overflow-hidden border-2 {% if loop.first %}border-[#C5A059]{% else %}border-transparent{% endif %} hover:border-[#C5A059] transition thumbnail" 
+                             onclick="changeImage({{ loop.index0 }})">
+                            <img src="{{ img }}" alt="" class="w-full h-16 sm:h-20 object-cover">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Информация о количестве фото -->
+                    <div class="flex justify-between items-center mt-3 text-xs text-gray-400">
+                        <div class="flex items-center space-x-1">
+                            <i class="fas fa-images"></i>
+                            <span>{{ images|length }} фотографий</span>
+                        </div>
+                        <button onclick="resetToFirstImage()" class="text-[#C5A059] hover:underline flex items-center space-x-1">
+                            <i class="fas fa-redo-alt"></i>
+                            <span>К первому фото</span>
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
+            </div>
                 
                 <!-- Информация о товаре -->
                 <div data-aos="fade-left" data-aos-duration="800">
@@ -659,6 +705,30 @@
         </div>
     </section>
 
+    <!-- Лайтбокс для просмотра всех изображений -->
+<div id="lightbox" class="hidden fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center">
+    <div class="relative w-full h-full flex items-center justify-center">
+        <button onclick="closeLightbox()" class="absolute top-5 right-5 text-white text-3xl hover:text-[#C5A059] transition z-10">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <button onclick="prevLightboxImage()" class="absolute left-5 text-white text-3xl hover:text-[#C5A059] transition z-10">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <img id="lightboxImage" src="" alt="" class="max-h-[90vh] max-w-[90vw] object-contain">
+        
+        <button onclick="nextLightboxImage()" class="absolute right-5 text-white text-3xl hover:text-[#C5A059] transition z-10">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <div class="absolute bottom-5 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-4 py-2 rounded-full">
+            <span id="lightboxIndex">1</span> / <span id="lightboxTotal">{{ images|length }}</span>
+        </div>
+    </div>
+</div>
+
+
     <!-- Похожие товары -->
     {% if related_products %}
     <section class="py-10 sm:py-16 lg:py-20">
@@ -692,7 +762,7 @@
                                     <h3 class="text-sm sm:text-base lg:text-lg royal-font font-bold text-white mb-1 sm:mb-2">{{ related.name }}</h3>
                                     <div class="flex items-center justify-between">
                                         {% if related.price %}
-                                        <span class="text-sm sm:text-base lg:text-lg font-bold text-[#C5A059]">{{ related.price }} ₽</span>
+                                        <span class="text-sm sm:text-base lg:text-lg font-bold text-[#C5A059]">{{ related.price }} TJS</span>
                                         {% else %}
                                         <span class="text-xs text-gray-400">По запросу</span>
                                         {% endif %}
@@ -727,7 +797,7 @@
                         <h3 class="text-lg royal-font font-bold text-white mb-2">{{ related.name }}</h3>
                         <div class="flex items-center justify-between">
                             {% if related.price %}
-                            <span class="text-lg font-bold text-[#C5A059]">{{ related.price }} ₽</span>
+                            <span class="text-lg font-bold text-[#C5A059]">{{ related.price }} TJS</span>
                             {% else %}
                             <span class="text-sm text-gray-400">По запросу</span>
                             {% endif %}
@@ -874,5 +944,144 @@
             }, 250);
         });
     </script>
+
+    <script>
+    // Данные изображений
+    const productImages = [
+        {% for img in product.get_images_list() %}
+        "{{ img }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    let currentImageIndex = 0;
+    let lightboxOpen = false;
+    
+    // Функция смены изображения
+    function changeImage(index) {
+        if (index >= 0 && index < productImages.length) {
+            currentImageIndex = index;
+            const mainImage = document.getElementById('mainProductImage');
+            if (mainImage) {
+                mainImage.src = productImages[index];
+            }
+            
+            // Обновляем индикатор
+            const currentIndexSpan = document.getElementById('currentImageIndex');
+            if (currentIndexSpan) {
+                currentIndexSpan.textContent = index + 1;
+            }
+            
+            // Обновляем активный thumbnail
+            document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+                if (i === index) {
+                    thumb.classList.add('border-[#C5A059]');
+                    thumb.classList.remove('border-transparent');
+                } else {
+                    thumb.classList.remove('border-[#C5A059]');
+                    thumb.classList.add('border-transparent');
+                }
+            });
+            
+            // Показываем/скрываем кнопку возврата
+            const resetBtn = document.getElementById('resetImageBtn');
+            if (resetBtn) {
+                if (index === 0) {
+                    resetBtn.classList.add('hidden');
+                } else {
+                    resetBtn.classList.remove('hidden');
+                }
+            }
+        }
+    }
+    
+    // Следующее изображение
+    function nextImage() {
+        if (currentImageIndex < productImages.length - 1) {
+            changeImage(currentImageIndex + 1);
+        } else {
+            // Если достигнут конец, переходим к первому
+            changeImage(0);
+        }
+    }
+    
+    // Предыдущее изображение
+    function prevImage() {
+        if (currentImageIndex > 0) {
+            changeImage(currentImageIndex - 1);
+        } else {
+            // Если в начале, переходим к последнему
+            changeImage(productImages.length - 1);
+        }
+    }
+    
+    // Возврат к первому изображению
+    function resetToFirstImage() {
+        changeImage(0);
+    }
+    
+    // Открыть лайтбокс
+    function openLightbox(index) {
+        if (productImages.length === 0) return;
+        
+        lightboxOpen = true;
+        document.getElementById('lightbox').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        updateLightboxImage(index);
+    }
+    
+    // Закрыть лайтбокс
+    function closeLightbox() {
+        lightboxOpen = false;
+        document.getElementById('lightbox').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    // Обновить изображение в лайтбоксе
+    function updateLightboxImage(index) {
+        currentImageIndex = index;
+        document.getElementById('lightboxImage').src = productImages[index];
+        document.getElementById('lightboxIndex').textContent = index + 1;
+        document.getElementById('lightboxTotal').textContent = productImages.length;
+    }
+    
+    // Следующее в лайтбоксе
+    function nextLightboxImage() {
+        let newIndex = currentImageIndex + 1;
+        if (newIndex >= productImages.length) {
+            newIndex = 0;
+        }
+        updateLightboxImage(newIndex);
+    }
+    
+    // Предыдущее в лайтбоксе
+    function prevLightboxImage() {
+        let newIndex = currentImageIndex - 1;
+        if (newIndex < 0) {
+            newIndex = productImages.length - 1;
+        }
+        updateLightboxImage(newIndex);
+    }
+    
+    // Обработка клавиш клавиатуры
+    document.addEventListener('keydown', function(e) {
+        if (!lightboxOpen) return;
+        
+        if (e.key === 'Escape') {
+            closeLightbox();
+        } else if (e.key === 'ArrowRight') {
+            nextLightboxImage();
+        } else if (e.key === 'ArrowLeft') {
+            prevLightboxImage();
+        }
+    });
+    
+    // Закрытие лайтбокса по клику вне изображения
+    document.getElementById('lightbox')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeLightbox();
+        }
+    });
+</script>
+
 </body>
 </html>

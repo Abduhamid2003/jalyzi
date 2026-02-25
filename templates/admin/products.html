@@ -354,10 +354,12 @@
                                placeholder="Макс. размеры">
                     </div>
                     
+                    <!-- Замените существующий блок загрузки изображения на: -->
                     <div>
-                        <label class="block text-gray-400 mb-1 text-sm">Изображение</label>
-                        <input type="file" name="image" accept="image/*"
-                               class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-2 text-white file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-[#C5A059] file:text-black file:font-semibold hover:file:bg-[#E5C687]">
+                        <label class="block text-gray-400 mb-1 text-sm">Изображения (можно выбрать несколько)</label>
+                        <input type="file" name="images" accept="image/*" multiple
+                                class="w-full bg-black bg-opacity-50 border border-gray-700 rounded-lg px-4 py-2 text-white file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-[#C5A059] file:text-black file:font-semibold hover:file:bg-[#E5C687]">
+                        <p class="text-xs text-gray-500 mt-1">Можно выбрать несколько изображений, удерживая Ctrl</p>
                     </div>
                     
                     <div class="flex items-center space-x-6">

@@ -1,15 +1,16 @@
-# main.py - ПОЛНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ
+# main.py - ПОЛНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ С ПОДДЕРЖКОЙ МНОЖЕСТВЕННЫХ ИЗОБРАЖЕНИЙ
 from fastapi import FastAPI, Request, Form, Depends, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, Boolean, ForeignKey, inspect, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, DateTime, Boolean, ForeignKey, inspect, text, MetaData
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 from datetime import datetime
 import os
 import shutil
 import hashlib
 import json
+from typing import List
 
 # Создаем папки
 os.makedirs("static/uploads/products", exist_ok=True)
@@ -42,12 +43,16 @@ templates.env.filters['from_json'] = from_json
 SQLALCHEMY_DATABASE_URL = "sqlite:///./royal_blinds.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+
+# Очищаем существующие метаданные и создаем новые
+metadata = MetaData()
+Base = declarative_base(metadata=metadata)
 
 # ===== МОДЕЛИ =====
 
 class Admin(Base):
     __tablename__ = "admins"
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password_hash = Column(String)
@@ -55,6 +60,7 @@ class Admin(Base):
 
 class Category(Base):
     __tablename__ = "categories"
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     description = Column(Text)
@@ -64,23 +70,42 @@ class Category(Base):
 
 class Product(Base):
     __tablename__ = "products"
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(String, unique=True, index=True)
     name = Column(String)
     category_id = Column(Integer, ForeignKey("categories.id"))
     description = Column(Text)
     price = Column(Float, nullable=True)
-    image = Column(String, nullable=True)
-    images = Column(Text, nullable=True)
+    image = Column(String, nullable=True)  # Для обратной совместимости (первое фото)
+    images = Column(Text, nullable=True)   # JSON массив путей ко всем фото
     material = Column(String, nullable=True)
     sizes = Column(String, nullable=True)
     in_stock = Column(Boolean, default=True)
     is_popular = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now)
     category = relationship("Category", back_populates="products")
+    
+    def get_images_list(self):
+        """Возвращает список всех изображений"""
+        if self.images:
+            try:
+                return json.loads(self.images)
+            except:
+                pass
+        # Если есть только старое поле image, возвращаем его как список
+        if self.image:
+            return [self.image]
+        return []
+    
+    def get_first_image(self):
+        """Возвращает первое изображение для совместимости"""
+        images = self.get_images_list()
+        return images[0] if images else None
 
 class Installer(Base):
     __tablename__ = "installers"
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -93,6 +118,7 @@ class Installer(Base):
 
 class Order(Base):
     __tablename__ = "orders"
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(String, unique=True, index=True)
     client_name = Column(String, nullable=False)
@@ -135,6 +161,21 @@ def upgrade_database():
     """Добавляет новые колонки в существующие таблицы"""
     inspector = inspect(engine)
     
+    # Обновление таблицы products
+    if inspector.has_table("products"):
+        existing_columns = [col['name'] for col in inspector.get_columns("products")]
+        
+        # Добавляем колонку images если её нет
+        if 'images' not in existing_columns:
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE products ADD COLUMN images TEXT"))
+                    conn.commit()
+                    print("✅ Добавлена колонка: images в таблицу products")
+            except Exception as e:
+                print(f"⚠️ Не удалось добавить images: {e}")
+    
+    # Обновление таблицы orders
     if inspector.has_table("orders"):
         existing_columns = [col['name'] for col in inspector.get_columns("orders")]
         
@@ -195,6 +236,84 @@ def check_admin_auth(request: Request):
     admin_id = request.cookies.get("admin_id")
     return bool(admin_id)
 
+# ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С МНОЖЕСТВЕННЫМИ ИЗОБРАЖЕНИЯМИ =====
+
+def save_multiple_images(files: List[UploadFile], product_id: str, prefix: str = "product") -> List[str]:
+    """Сохраняет несколько изображений и возвращает список путей"""
+    image_paths = []
+    
+    for index, file in enumerate(files):
+        if file and file.filename:
+            # Создаем уникальное имя для каждого файла
+            ext = file.filename.split(".")[-1]
+            timestamp = datetime.now().timestamp()
+            filename = f"{prefix}_{product_id}_{index}_{timestamp}.{ext}"
+            filepath = f"static/uploads/products/{filename}"
+            
+            # Сохраняем файл
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Добавляем путь в список
+            image_paths.append(f"/static/uploads/products/{filename}")
+            
+            # Важно: сбрасываем позицию файла для следующего чтения
+            file.file.seek(0)
+    
+    return image_paths
+
+def delete_image_file(image_path):
+    """Удаляет файл изображения"""
+    if not image_path:
+        return False
+    
+    try:
+        # Получаем абсолютный путь
+        if image_path.startswith('/'):
+            full_path = image_path[1:]
+        else:
+            full_path = image_path
+        
+        # Добавляем текущую директорию если нужно
+        if not os.path.isabs(full_path):
+            full_path = os.path.join(os.getcwd(), full_path)
+        
+        if os.path.exists(full_path):
+            os.remove(full_path)
+            print(f"✅ Файл удален: {full_path}")
+            return True
+        else:
+            print(f"⚠️ Файл не найден: {full_path}")
+            return False
+    except Exception as e:
+        print(f"❌ Ошибка при удалении {image_path}: {e}")
+        return False
+
+def delete_multiple_images(images_json):
+    """Удаляет несколько изображений по JSON"""
+    if not images_json:
+        return
+    
+    try:
+        paths = json.loads(images_json)
+        for path in paths:
+            delete_image_file(path)
+    except Exception as e:
+        print(f"❌ Ошибка при удалении изображений: {e}")
+        
+def migrate_existing_products(db: Session):
+    """Переносит существующие изображения в новый формат"""
+    products = db.query(Product).all()
+    migrated_count = 0
+    for product in products:
+        if product.image and not product.images:
+            # Создаем JSON массив из существующего изображения
+            product.images = json.dumps([product.image])
+            migrated_count += 1
+    if migrated_count > 0:
+        db.commit()
+        print(f"✅ {migrated_count} существующих товаров обновлены для поддержки множественных изображений")
+
 # ===== СТАТИЧЕСКИЕ ФАЙЛЫ =====
 @app.get("/static/js/whatsapp.js")
 async def whatsapp_js():
@@ -252,6 +371,7 @@ async def admin_logout():
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, db: Session = Depends(get_db)):
     init_admin(db)
+    migrate_existing_products(db)  # Миграция существующих товаров
     popular_products = db.query(Product).filter(Product.is_popular == True).limit(6).all()
     categories = db.query(Category).all()
     return templates.TemplateResponse(
@@ -398,23 +518,28 @@ async def admin_add_product(
     sizes: str = Form(None),
     in_stock: bool = Form(False),
     is_popular: bool = Form(False),
-    image: UploadFile = File(None),
+    images: List[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
     if not check_admin_auth(request):
         return RedirectResponse(url="/admin/login", status_code=303)
+    
     try:
+        # Проверка на дубликат
         existing_product = db.query(Product).filter(Product.product_id == product_id).first()
         if existing_product:
             return RedirectResponse(url="/admin/products?error=duplicate_id", status_code=303)
-        image_path = None
-        if image and image.filename:
-            ext = image.filename.split(".")[-1]
-            filename = f"product_{product_id}_{datetime.now().timestamp()}.{ext}"
-            filepath = f"static/uploads/products/{filename}"
-            with open(filepath, "wb") as buffer:
-                shutil.copyfileobj(image.file, buffer)
-            image_path = f"/static/uploads/products/{filename}"
+        
+        # Сохраняем множественные изображения
+        image_paths = []
+        if images:
+            valid_images = [img for img in images if img and img.filename]
+            if valid_images:
+                image_paths = save_multiple_images(valid_images, product_id)
+        
+        # Первое изображение для поля image (для обратной совместимости)
+        first_image = image_paths[0] if image_paths else None
+        
         product = Product(
             product_id=product_id,
             name=name,
@@ -425,15 +550,20 @@ async def admin_add_product(
             sizes=sizes,
             in_stock=in_stock,
             is_popular=is_popular,
-            image=image_path
+            image=first_image,
+            images=json.dumps(image_paths) if image_paths else None
         )
+        
         db.add(product)
         db.commit()
+        
         return RedirectResponse(url="/admin/products?added=1", status_code=303)
+        
     except Exception as e:
         print(f"Error adding product: {e}")
         return RedirectResponse(url="/admin/products?error=add_failed", status_code=303)
 
+# ===== ВАЖНО: ЭТО ЕДИНСТВЕННЫЙ ОБРАБОТЧИК ДЛЯ ОБНОВЛЕНИЯ ТОВАРА =====
 @app.post("/admin/products/update/{product_id}")
 async def admin_update_product(
     product_id: int,
@@ -447,43 +577,163 @@ async def admin_update_product(
     sizes: str = Form(None),
     in_stock: bool = Form(False),
     is_popular: bool = Form(False),
-    image: UploadFile = File(None),
+    images: List[UploadFile] = File(None),
+    image_mode: str = Form("append"),
+    image_order: str = Form("[]"),
+    deleted_images: str = Form("[]"),
     db: Session = Depends(get_db)
 ):
     if not check_admin_auth(request):
         return RedirectResponse(url="/admin/login", status_code=303)
+    
+    print("\n" + "="*60)
+    print(f"🔄 ОБНОВЛЕНИЕ ТОВАРА ID: {product_id}")
+    print("="*60)
+    
     try:
         product = db.query(Product).filter(Product.id == product_id).first()
-        if product:
-            product.product_id = product_id_code
-            product.name = name
-            product.category_id = category_id
-            product.description = description
-            product.price = price if price else None
-            product.material = material
-            product.sizes = sizes
-            product.in_stock = in_stock
-            product.is_popular = is_popular
-            if image and image.filename:
-                if product.image:
-                    try:
-                        old_image_path = product.image[1:]
-                        if os.path.exists(old_image_path):
-                            os.remove(old_image_path)
-                    except:
-                        pass
-                ext = image.filename.split(".")[-1]
-                filename = f"product_{product_id_code}_{datetime.now().timestamp()}.{ext}"
-                filepath = f"static/uploads/products/{filename}"
-                with open(filepath, "wb") as buffer:
-                    shutil.copyfileobj(image.file, buffer)
-                product.image = f"/static/uploads/products/{filename}"
-            db.commit()
-            return RedirectResponse(url="/admin/products?updated=1", status_code=303)
-        else:
+        if not product:
+            print("❌ Товар не найден")
             return RedirectResponse(url="/admin/products?error=not_found", status_code=303)
+        
+        print(f"📦 Товар: {product.name}")
+        print(f"📋 Полученные данные:")
+        print(f"  - Артикул: {product_id_code}")
+        print(f"  - Название: {name}")
+        print(f"  - Категория: {category_id}")
+        print(f"  - Режим: {image_mode}")
+        print(f"  - Удаляемые изображения: {deleted_images}")
+        
+        # Обновляем основные поля
+        product.product_id = product_id_code
+        product.name = name
+        product.category_id = category_id
+        product.description = description
+        product.price = price if price else None
+        product.material = material
+        product.sizes = sizes
+        product.in_stock = in_stock
+        product.is_popular = is_popular
+        
+        print("✅ Основные поля обновлены")
+        
+        # Получаем текущие изображения из БД
+        current_images = product.get_images_list()
+        print(f"🖼️ Текущие изображения в БД ({len(current_images)}): {current_images}")
+        
+        # ===== ВАЖНО: ОБРАБОТКА УДАЛЕННЫХ ИЗОБРАЖЕНИЙ =====
+        if deleted_images and deleted_images != "[]":
+            try:
+                deleted_list = json.loads(deleted_images)
+                print(f"🗑️ СПИСОК НА УДАЛЕНИЕ ИЗ ФОРМЫ: {deleted_list}")
+                
+                # Удаляем файлы с диска
+                for img_path in deleted_list:
+                    if img_path:
+                        # Получаем полный путь к файлу
+                        full_path = img_path[1:] if img_path.startswith('/') else img_path
+                        full_path = os.path.join(os.getcwd(), full_path)
+                        
+                        print(f"  Попытка удалить файл: {full_path}")
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                            print(f"  ✅ Файл удален: {full_path}")
+                        else:
+                            print(f"  ⚠️ Файл не найден: {full_path}")
+                
+                # Убираем удаленные изображения из списка
+                old_count = len(current_images)
+                current_images = [img for img in current_images if img not in deleted_list]
+                print(f"✅ Удалено из списка: {old_count - len(current_images)} изображений")
+                print(f"📋 Осталось после удаления: {current_images}")
+                
+            except Exception as e:
+                print(f"❌ Ошибка при удалении изображений: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        # Обработка новых изображений
+        new_image_paths = []
+        if images:
+            valid_images = [img for img in images if img and img.filename]
+            if valid_images:
+                print(f"📤 Загрузка {len(valid_images)} новых изображений")
+                
+                for idx, img in enumerate(valid_images):
+                    try:
+                        # Генерируем уникальное имя файла
+                        ext = img.filename.split(".")[-1]
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"product_{product_id_code}_{timestamp}_{idx}.{ext}"
+                        filepath = f"static/uploads/products/{filename}"
+                        
+                        # Сохраняем файл
+                        with open(filepath, "wb") as buffer:
+                            shutil.copyfileobj(img.file, buffer)
+                        
+                        new_image_paths.append(f"/static/uploads/products/{filename}")
+                        print(f"  ✅ Сохранено: {filename}")
+                        
+                    except Exception as e:
+                        print(f"  ❌ Ошибка при сохранении {img.filename}: {e}")
+        
+        # Применяем режим
+        print(f"🎯 Режим обработки: {image_mode}")
+        if image_mode == "replace":
+            print("Режим ЗАМЕНА - удаляем все старые изображения")
+            # Удаляем все старые файлы
+            for img in current_images:
+                full_path = img[1:] if img.startswith('/') else img
+                full_path = os.path.join(os.getcwd(), full_path)
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+                    print(f"  ✅ Удален старый файл: {full_path}")
+            final_images = new_image_paths
+        else:  # append
+            print("Режим ДОБАВЛЕНИЕ - сохраняем старые и добавляем новые")
+            final_images = current_images + new_image_paths
+        
+        # Применяем порядок изображений
+        if image_order and image_order != "[]":
+            try:
+                ordered_paths = json.loads(image_order)
+                print(f"📋 Запрошенный порядок: {ordered_paths}")
+                
+                # Создаем новый список с правильным порядком
+                new_final = []
+                for path in ordered_paths:
+                    if path in final_images:
+                        new_final.append(path)
+                
+                # Добавляем те, что не были в ordered_paths
+                for path in final_images:
+                    if path not in new_final:
+                        new_final.append(path)
+                
+                final_images = new_final
+                print(f"✅ Применен порядок: {final_images}")
+            except Exception as e:
+                print(f"❌ Ошибка при применении порядка: {e}")
+        
+        # Обновляем поля в БД
+        product.images = json.dumps(final_images) if final_images else None
+        product.image = final_images[0] if final_images else None
+        
+        print(f"💾 СОХРАНЕНИЕ В БД:")
+        print(f"  - Всего изображений: {len(final_images)}")
+        print(f"  - images JSON: {product.images}")
+        print(f"  - image (первое): {product.image}")
+        
+        db.commit()
+        print("✅ Изменения сохранены в БД")
+        print("="*60 + "\n")
+        
+        return RedirectResponse(url="/admin/products?updated=1", status_code=303)
+        
     except Exception as e:
-        print(f"Error updating product: {e}")
+        print(f"❌ Ошибка при обновлении товара: {e}")
+        import traceback
+        traceback.print_exc()
         return RedirectResponse(url="/admin/products?error=update_failed", status_code=303)
 
 @app.post("/admin/products/delete/{product_id}")
@@ -494,17 +744,24 @@ async def admin_delete_product(
 ):
     if not check_admin_auth(request):
         return RedirectResponse(url="/admin/login", status_code=303)
+    
     try:
         product = db.query(Product).filter(Product.id == product_id).first()
         if product:
-            if product.image:
+            # Удаляем все изображения
+            delete_multiple_images(product.images)
+            # Удаляем старое изображение если есть
+            if product.image and not product.images:
                 try:
                     os.remove(product.image[1:])
                 except:
                     pass
+            
             db.delete(product)
             db.commit()
+        
         return RedirectResponse(url="/admin/products?deleted=1", status_code=303)
+        
     except Exception as e:
         print(f"Error deleting product: {e}")
         return RedirectResponse(url="/admin/products?error=delete_failed", status_code=303)
@@ -846,9 +1103,6 @@ async def admin_add_order(
         db.add(order)
         db.commit()
         print(f"✅ Заказ создан: {order_id}, сумма: {total_sum} TJS")
-        print(f"📦 Плиссе: {plisse_items}")
-        print(f"📦 День/Ночь: {daynight_items}")
-        print(f"📦 Мини: {mini_items}")
         
         return RedirectResponse(url="/admin/orders?added=1", status_code=303)
         
@@ -975,7 +1229,403 @@ async def get_order(order_id: int, request: Request, db: Session = Depends(get_d
         print(f"Error getting order: {e}")
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
-import os
+# ===== ЭКСПОРТ ЗАКАЗОВ В РЕДАКТИРУЕМЫЙ EXCEL =====
+from fastapi.responses import FileResponse
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+import tempfile
+import json
+
+@app.get("/admin/orders/export-editable-excel")
+async def export_editable_excel(request: Request, db: Session = Depends(get_db)):
+    if not check_admin_auth(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    try:
+        # Получаем все заказы
+        orders = db.query(Order).order_by(Order.created_at.desc()).all()
+        
+        # Создаем временный файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            file_path = tmp.name
+        
+        # Создаем рабочую книгу
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Заказы"
+        
+        # ===== НАСТРОЙКА ФИЛЬТРОВ =====
+        ws.auto_filter.ref = "A1:L1"
+        
+        # ===== СТИЛИ =====
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        header_fill = PatternFill(start_color="C5A059", end_color="C5A059", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        
+        cell_center = Alignment(horizontal="center", vertical="center")
+        cell_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
+        border = Border(
+            left=Side(style='thin'), right=Side(style='thin'),
+            top=Side(style='thin'), bottom=Side(style='thin')
+        )
+        
+        # Стиль для ячеек с выпадающим списком
+        dropdown_fill = PatternFill(start_color="E8F0FE", end_color="E8F0FE", fill_type="solid")
+        
+        # ===== ЗАГОЛОВКИ =====
+        headers = [
+            "ID заказа",
+            "Дата",
+            "Клиент",
+            "Телефон клиента",
+            "Плиссе (ID | м² | TJS)",
+            "День и Ночь (ID | м² | TJS)",
+            "Мини (ID | м² | TJS)",
+            "Установщик",
+            "Телефон установщика",
+            "Статус оплаты",
+            "Статус заказа",
+            "Общая сумма (TJS)"
+        ]
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = border
+        
+        # ===== СОЗДАНИЕ ВЫПАДАЮЩИХ СПИСКОВ =====
+        # Для статуса оплаты
+        dv_payment = DataValidation(
+            type="list", 
+            formula1='"✅ Оплачено,⏳ Не оплачено"',
+            allow_blank=True,
+            showErrorMessage=True,
+            errorTitle="Ошибка",
+            error="Выберите значение из списка!"
+        )
+        ws.add_data_validation(dv_payment)
+        
+        # Для статуса заказа
+        dv_status = DataValidation(
+            type="list", 
+            formula1='"🟡 Оформлен,🔵 На производстве,🟢 Готов,✅ Установлен,❌ Отменен"',
+            allow_blank=True,
+            showErrorMessage=True,
+            errorTitle="Ошибка",
+            error="Выберите значение из списка!"
+        )
+        ws.add_data_validation(dv_status)
+        
+        # ===== ДАННЫЕ =====
+        for row, order in enumerate(orders, 2):
+            # Парсим JSON данные
+            plisse_items = json.loads(order.plisse_items) if order.plisse_items else []
+            daynight_items = json.loads(order.daynight_items) if order.daynight_items else []
+            mini_items = json.loads(order.mini_items) if order.mini_items else []
+            
+            # Форматируем данные для Плиссе
+            plisse_text = ""
+            for item in plisse_items:
+                plisse_text += f"{item.get('sku', '')} | {item.get('square', 0)}м² | {item.get('sum', 0)} TJS\n"
+            
+            # Форматируем данные для День и Ночь
+            daynight_text = ""
+            for item in daynight_items:
+                daynight_text += f"{item.get('sku', '')} | {item.get('square', 0)}м² | {item.get('sum', 0)} TJS\n"
+            
+            # Форматируем данные для Мини
+            mini_text = ""
+            for item in mini_items:
+                mini_text += f"{item.get('sku', '')} | {item.get('square', 0)}м² | {item.get('sum', 0)} TJS\n"
+            
+            # Общая сумма из БД
+            total_sum = order.total_sum or 0
+            
+            # Статусы для выпадающих списков
+            payment_status_display = "✅ Оплачено" if order.payment_status == "paid" else "⏳ Не оплачено"
+            
+            status_display = {
+                "pending": "🟡 Оформлен",
+                "production": "🔵 На производстве",
+                "ready": "🟢 Готов",
+                "installed": "✅ Установлен",
+                "cancelled": "❌ Отменен"
+            }.get(order.status, order.status)
+            
+            # Данные строки
+            row_data = [
+                order.order_id,
+                order.created_at.strftime("%d.%m.%Y") if order.created_at else "",
+                order.client_name,
+                order.client_phone,
+                plisse_text.strip(),
+                daynight_text.strip(),
+                mini_text.strip(),
+                f"{order.installer.name} (@{order.installer.username})" if order.installer else "Не назначен",
+                order.installer_phone or "",
+                payment_status_display,
+                status_display,
+                total_sum
+            ]
+            
+            for col, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row, column=col, value=value)
+                cell.border = border
+                
+                if col == 10:
+                    dv_payment.add(cell)
+                    cell.fill = dropdown_fill
+                    cell.alignment = cell_center
+                elif col == 11:
+                    dv_status.add(cell)
+                    cell.fill = dropdown_fill
+                    cell.alignment = cell_center
+                elif col == 12:
+                    cell.alignment = cell_center
+                    cell.font = Font(bold=True, color="C5A059")
+                    cell.number_format = '#,##0.00 "TJS"'
+                elif col in [5, 6, 7]:
+                    cell.alignment = cell_left
+                else:
+                    cell.alignment = cell_left
+        
+        # ===== АВТОПОДБОР ШИРИНЫ =====
+        for col in range(1, len(headers) + 1):
+            max_length = 0
+            column_letter = get_column_letter(col)
+            
+            for row in range(1, len(orders) + 2):
+                cell_value = ws.cell(row=row, column=col).value
+                if cell_value:
+                    lines = str(cell_value).count('\n') + 1
+                    max_line_length = max(len(str(line)) for line in str(cell_value).split('\n'))
+                    cell_length = max_line_length * 0.8
+                    if cell_length > max_length:
+                        max_length = cell_length
+            
+            adjusted_width = min(max_length + 2, 50)
+            if col in [5, 6, 7]:
+                adjusted_width = min(max_length + 5, 60)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        ws.freeze_panes = 'A2'
+        wb.save(file_path)
+        
+        filename = f"zakazy_edit_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        return FileResponse(
+            path=file_path,
+            filename=filename,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        
+    except Exception as e:
+        print(f"❌ Error exporting editable excel: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+# ===== ОБНОВЛЕНИЕ ЗАКАЗОВ ИЗ EXCEL =====
+from fastapi import UploadFile
+import pandas as pd
+import io
+
+@app.post("/admin/orders/update-from-excel")
+async def update_orders_from_excel(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    if not check_admin_auth(request):
+        return JSONResponse({"success": False, "error": "Unauthorized"}, status_code=401)
+    
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents), sheet_name="Заказы")
+        
+        print(f"📊 Найдено строк в Excel: {len(df)}")
+        
+        updated_count = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                order_id_str = str(row.get('ID заказа', '')).strip()
+                if pd.isna(order_id_str) or not order_id_str:
+                    continue
+                
+                print(f"🔍 Обработка заказа: {order_id_str}")
+                
+                order = db.query(Order).filter(Order.order_id == order_id_str).first()
+                if not order:
+                    errors.append(f"Строка {index + 2}: Заказ {order_id_str} не найден")
+                    continue
+                
+                payment_status = row.get('Статус оплаты')
+                if pd.notna(payment_status):
+                    old_payment = order.payment_status
+                    if "✅" in str(payment_status):
+                        order.payment_status = "paid"
+                    elif "⏳" in str(payment_status):
+                        order.payment_status = "unpaid"
+                    print(f"  Статус оплаты: {old_payment} -> {order.payment_status}")
+                
+                order_status = row.get('Статус заказа')
+                if pd.notna(order_status):
+                    old_status = order.status
+                    status_map = {
+                        "🟡 Оформлен": "pending",
+                        "🔵 На производстве": "production",
+                        "🟢 Готов": "ready",
+                        "✅ Установлен": "installed",
+                        "❌ Отменен": "cancelled"
+                    }
+                    status_str = str(order_status).strip()
+                    if status_str in status_map:
+                        order.status = status_map[status_str]
+                        print(f"  Статус заказа: {old_status} -> {order.status}")
+                
+                client_name = row.get('Клиент')
+                if pd.notna(client_name) and str(client_name).strip():
+                    old_name = order.client_name
+                    order.client_name = str(client_name).strip()
+                    print(f"  Имя клиента: {old_name} -> {order.client_name}")
+                
+                client_phone = row.get('Телефон клиента')
+                if pd.notna(client_phone) and str(client_phone).strip():
+                    old_phone = order.client_phone
+                    order.client_phone = str(client_phone).strip()
+                    print(f"  Телефон: {old_phone} -> {order.client_phone}")
+                
+                total_sum = row.get('Общая сумма (TJS)')
+                if pd.notna(total_sum):
+                    try:
+                        old_sum = order.total_sum
+                        if isinstance(total_sum, str):
+                            total_sum = float(total_sum.replace('TJS', '').strip())
+                        else:
+                            total_sum = float(total_sum)
+                        order.total_sum = total_sum
+                        print(f"  Сумма: {old_sum} -> {order.total_sum}")
+                    except Exception as e:
+                        print(f"  Ошибка при обновлении суммы: {e}")
+                
+                updated_count += 1
+                
+            except Exception as e:
+                errors.append(f"Строка {index + 2}: {str(e)}")
+                print(f"❌ Ошибка: {e}")
+        
+        if updated_count > 0:
+            db.commit()
+            print(f"✅ Сохранено {updated_count} изменений")
+        
+        return JSONResponse({
+            "success": True,
+            "updated": updated_count,
+            "errors": errors
+        })
+        
+    except Exception as e:
+        print(f"❌ Error updating from excel: {e}")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+# ===== ОБНОВЛЕНИЕ EXCEL ФАЙЛА БЕЗ СКАЧИВАНИЯ =====
+@app.post("/admin/orders/refresh-excel-direct")
+async def refresh_excel_direct(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    if not check_admin_auth(request):
+        return JSONResponse({"success": False, "error": "Unauthorized"}, status_code=401)
+    
+    try:
+        orders = db.query(Order).order_by(Order.created_at.desc()).all()
+        
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+            temp_path = tmp.name
+            content = await file.read()
+            tmp.write(content)
+        
+        wb = openpyxl.load_workbook(temp_path)
+        ws = wb["Заказы"]
+        
+        max_row = ws.max_row
+        if max_row > 1:
+            ws.delete_rows(2, max_row - 1)
+        
+        for row, order in enumerate(orders, 2):
+            plisse_items = json.loads(order.plisse_items) if order.plisse_items else []
+            daynight_items = json.loads(order.daynight_items) if order.daynight_items else []
+            mini_items = json.loads(order.mini_items) if order.mini_items else []
+            
+            plisse_text = ""
+            for item in plisse_items:
+                plisse_text += f"{item.get('sku', '')} | {item.get('square', 0)}м² | {item.get('sum', 0)} TJS\n"
+            
+            daynight_text = ""
+            for item in daynight_items:
+                daynight_text += f"{item.get('sku', '')} | {item.get('square', 0)}м² | {item.get('sum', 0)} TJS\n"
+            
+            mini_text = ""
+            for item in mini_items:
+                mini_text += f"{item.get('sku', '')} | {item.get('square', 0)}м² | {item.get('sum', 0)} TJS\n"
+            
+            total_sum = order.total_sum or 0
+            
+            payment_status_display = "✅ Оплачено" if order.payment_status == "paid" else "⏳ Не оплачено"
+            
+            status_display = {
+                "pending": "🟡 Оформлен",
+                "production": "🔵 На производстве",
+                "ready": "🟢 Готов",
+                "installed": "✅ Установлен",
+                "cancelled": "❌ Отменен"
+            }.get(order.status, order.status)
+            
+            row_data = [
+                order.order_id,
+                order.created_at.strftime("%d.%m.%Y") if order.created_at else "",
+                order.client_name,
+                order.client_phone,
+                plisse_text.strip(),
+                daynight_text.strip(),
+                mini_text.strip(),
+                f"{order.installer.name} (@{order.installer.username})" if order.installer else "Не назначен",
+                order.installer_phone or "",
+                payment_status_display,
+                status_display,
+                total_sum
+            ]
+            
+            for col, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row, column=col, value=value)
+                if col == 12:
+                    cell.font = Font(bold=True, color="C5A059")
+                    cell.number_format = '#,##0.00 "TJS"'
+        
+        wb.save(temp_path)
+        
+        with open(temp_path, 'rb') as f:
+            updated_content = f.read()
+        
+        os.unlink(temp_path)
+        
+        original_filename = file.filename
+        return Response(
+            content=updated_content,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename={original_filename}"
+            }
+        )
+        
+    except Exception as e:
+        print(f"❌ Error refreshing excel: {e}")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 if __name__ == "__main__":
     import uvicorn

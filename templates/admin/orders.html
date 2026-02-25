@@ -303,21 +303,53 @@
         
         <!-- Основной контент -->
         <div class="flex-1 ml-64 p-8 overflow-y-auto">
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-3xl royal-font font-bold">
-                        <span class="royal-text">Управление</span>
-                        <span class="text-white"> заказами</span>
-                    </h1>
-                    <p class="text-gray-400 mt-2">
-                        Всего заказов: <span id="totalOrders" class="text-[#C5A059] font-bold">{{ orders|length }}</span>
-                    </p>
-                </div>
-                <button id="createOrderBtn" onclick="openAddModal()"
-                        class="royal-gradient text-black px-6 py-3 rounded-lg font-semibold hover:shadow-2xl transform hover:scale-105 transition flex items-center space-x-2">
-                    <i class="fas fa-plus-circle"></i><span>Создать заказ</span>
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl royal-font font-bold">
+                <span class="royal-text">Управление</span>
+                <span class="text-white"> заказами</span>
+            </h1>
+            <p class="text-gray-400 mt-2">
+                Всего заказов: <span id="totalOrders" class="text-[#C5A059] font-bold">{{ orders|length }}</span>
+            </p>
+        </div>
+        <div class="flex space-x-4">
+            <!-- Кнопка экспорта нового Excel -->
+            <button onclick="exportEditableExcel()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <i class="fas fa-file-excel text-xl"></i>
+                <span>Скачать Excel</span>
+            </button>
+            
+            <!-- Кнопка обновления Excel (ЗАМЕНА СТАРОГО ФАЙЛА) -->
+<div class="relative">
+    <input type="file" id="excelRefresh" accept=".xlsx" class="hidden" onchange="refreshExcelAndReplace()">
+    <button onclick="document.getElementById('excelRefresh').click()"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+        <i class="fas fa-sync-alt"></i>
+        <span>Обновить Excel (заменить)</span>
+    </button>
+</div>
+            
+            <!-- Кнопка загрузки изменений -->
+            <div class="relative">
+                <input type="file" id="excelUpload" accept=".xlsx" class="hidden" onchange="uploadExcel()">
+                <button onclick="document.getElementById('excelUpload').click()"
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <i class="fas fa-upload"></i>
+                    <span>Загрузить изменения</span>
                 </button>
             </div>
+            
+            <!-- Кнопка создания заказа -->
+            <button id="createOrderBtn" onclick="openAddModal()"
+                    class="royal-gradient text-black px-6 py-3 rounded-lg font-semibold hover:shadow-2xl transform hover:scale-105 transition flex items-center space-x-2">
+                <i class="fas fa-plus-circle"></i>
+                <span>Создать заказ</span>
+            </button>
+        </div>
+    </div>
+    <!-- Остальной код... -->
             
             <!-- Фильтры -->
             <div class="glass-card rounded-xl p-6 mb-6">
@@ -868,6 +900,159 @@
     </div>
 
     <script>
+
+// ========== ОБНОВЛЕНИЕ EXCEL ФАЙЛА (ЗАМЕНА СТАРОГО) ==========
+function refreshExcelAndReplace() {
+    const fileInput = document.getElementById('excelRefresh');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('Выберите Excel файл для обновления', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    showNotification('Обновление файла...', 'info');
+    
+    fetch('/admin/orders/refresh-excel-direct', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Ошибка при обновлении');
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        // Создаем ссылку для скачивания
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name; // ТО ЖЕ САМОЕ ИМЯ!
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showNotification(`✅ Файл "${file.name}" обновлен! Старый файл заменен.`, 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('❌ Ошибка при обновлении Excel', 'error');
+    })
+    .finally(() => {
+        fileInput.value = ''; // Очищаем input
+    });
+}
+
+// ========== ЭКСПОРТ В EXCEL ==========
+function exportToExcel() {
+    showNotification('Подготовка файла Excel...', 'info');
+    
+    fetch('/admin/orders/export-excel')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка при экспорте');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Создаем ссылку для скачивания
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `zakazy_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showNotification('✅ Excel файл готов к скачиванию!', 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ Ошибка при экспорте в Excel', 'error');
+        });
+}
+
+// ========== ЭКСПОРТ РЕДАКТИРУЕМОГО EXCEL ==========
+function exportEditableExcel() {
+    showNotification('Подготовка редактируемого Excel файла...', 'info');
+    
+    fetch('/admin/orders/export-editable-excel')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка при экспорте');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `zakazy_edit_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showNotification('✅ Excel файл готов! Можно изменять и загрузить обратно', 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('❌ Ошибка при экспорте', 'error');
+        });
+}
+
+// ========== ЗАГРУЗКА ИЗМЕНЕНИЙ ИЗ EXCEL ==========
+function uploadExcel() {
+    const fileInput = document.getElementById('excelUpload');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('Выберите файл', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    showNotification('Загрузка изменений...', 'info');
+    
+    fetch('/admin/orders/update-from-excel', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let message = `✅ Обновлено заказов: ${data.updated}`;
+            if (data.errors && data.errors.length > 0) {
+                message += `\n❌ Ошибок: ${data.errors.length}`;
+                console.log('Errors:', data.errors);
+            }
+            showNotification(message, 'success');
+            
+            // Перезагружаем страницу через 2 секунды
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            showNotification('❌ ' + (data.error || 'Ошибка при обновлении'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('❌ Ошибка при загрузке', 'error');
+    })
+    .finally(() => {
+        fileInput.value = ''; // Очищаем input
+    });
+}
+
         // ========== ГЛОБАЛЬНЫЕ СЧЕТЧИКИ ДЛЯ СТРОК ==========
         let plisseItemCount = 1;
         let daynightItemCount = 1;
