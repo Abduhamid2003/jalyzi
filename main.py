@@ -40,8 +40,8 @@ def from_json(value):
 templates.env.filters['from_json'] = from_json
 
 # База данных
-SQLALCHEMY_DATABASE_URL = "sqlite:///./royal_blinds.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres.vtmerinbshexulrevael:wpkdbGv7HHm5ohnv@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Очищаем существующие метаданные и создаем новые
