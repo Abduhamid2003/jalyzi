@@ -521,7 +521,7 @@ async def admin_add_product(
     name: str = Form(...),
     category_id: int = Form(...),
     description: str = Form(...),
-    price: float = Form(None),
+    price: str = Form(None),
     material: str = Form(None),
     sizes: str = Form(None),
     in_stock: bool = Form(False),
@@ -547,6 +547,8 @@ async def admin_add_product(
         
         # Первое изображение для поля image (для обратной совместимости)
         first_image = image_paths[0] if image_paths else None
+
+        price = float(price) if price else None
         
         product = Product(
             product_id=product_id,
@@ -580,7 +582,7 @@ async def admin_update_product(
     name: str = Form(...),
     category_id: int = Form(...),
     description: str = Form(...),
-    price: float = Form(None),
+    price: str = Form(None),
     material: str = Form(None),
     sizes: str = Form(None),
     in_stock: bool = Form(False),
